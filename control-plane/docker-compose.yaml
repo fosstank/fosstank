@@ -1,0 +1,10 @@
+services:
+  control-plane:
+    image: control-plane:latest
+    build: .
+    user: 1000:1000
+    container_name: control-plane
+    restart: unless-stopped
+    volumes:
+      - ./streams:/streams
+      - ./config.json:/config.json

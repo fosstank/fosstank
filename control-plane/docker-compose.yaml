@@ -5,6 +5,8 @@ services:
     user: 1000:1000
     container_name: control-plane
     restart: unless-stopped
+    ports:
+      - 8080:8080
     volumes:
       - ./streams:/streams
-      - ./config.json:/config.json
+      - ./pb_data:/pb_data

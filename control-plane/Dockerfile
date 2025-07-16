@@ -11,4 +11,4 @@ EXPOSE 8080
 
 RUN apk add ffmpeg
 COPY --from=build /build/control-plane .
-ENTRYPOINT ["/control-plane", "serve", "--http=0.0.0.0:8080"]
+ENTRYPOINT ["/control-plane", "serve", "--http=0.0.0.0:8090"]

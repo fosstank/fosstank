@@ -2,19 +2,26 @@ package main
 
 import (
 	"context"
+	"embed"
+	"io/fs"
 	"log"
 	"os"
 	"os/exec"
-	"regexp"
 	"strings"
 	"sync"
 
 	"github.com/pocketbase/pocketbase"
+	"github.com/pocketbase/pocketbase/apis"
 	"github.com/pocketbase/pocketbase/core"
 	"github.com/pocketbase/pocketbase/plugins/migratecmd"
 
 	_ "control-plane/migrations"
 )
+
+//go:embed ui/out/*
+var client embed.FS
+
+const STREAM_OUTPUT_DIR = "streams"
 
 func main() {
 	// 1. Create config for input video which will be cli arg passed to ffmpeg
@@ -33,28 +40,45 @@ func main() {
 		Automigrate: isGoRun,
 	})
 
+	// Serve ui
+	app.OnServe().BindFunc(func(se *core.ServeEvent) error {
+		public, err := fs.Sub(client, "ui/out")
+		if err != nil {
+			return err
+		}
+		se.Router.GET("/{path...}", apis.Static(public, false))
+		return se.Next()
+	})
+
+	// Create stream output dir
+	err := os.MkdirAll(STREAM_OUTPUT_DIR, 0755)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	// Serve stream output dir
+	app.OnServe().BindFunc(func(se *core.ServeEvent) error {
+		se.Router.GET("/"+STREAM_OUTPUT_DIR+"/{path...}", apis.Static(os.DirFS(STREAM_OUTPUT_DIR), false))
+		return se.Next()
+	})
+
+	// Start ffmpeg processes
 	ctx, cancel := context.WithCancel(context.Background())
 	var wg sync.WaitGroup
 	app.OnServe().BindFunc(func(e *core.ServeEvent) error {
 		streams, err := app.FindAllRecords("streams")
 		if err != nil {
-			return err
-		}
-
-		const output_dir = "streams"
-		err = os.MkdirAll(output_dir, 0755)
-		if err != nil {
-			return err
+			log.Fatal(err)
 		}
 
 		for _, stream := range streams {
 			wg.Add(1)
-			go encodeStream(ctx, &wg, output_dir, stream)
+			go encodeStream(ctx, &wg, stream)
 		}
-
 		return e.Next()
 	})
 
+	// Kill ffmpeg processes
 	app.OnTerminate().BindFunc(func(e *core.TerminateEvent) error {
 		cancel()
 		wg.Wait()
@@ -66,27 +90,16 @@ func main() {
 	}
 }
 
-func encodeStream(ctx context.Context, wg *sync.WaitGroup, outputDir string, stream *core.Record) error {
+func encodeStream(ctx context.Context, wg *sync.WaitGroup, stream *core.Record) error {
 	defer wg.Done()
 
-	name := stream.GetString("name")
-	rtspUrl := stream.GetString("rtspUrl")
-
-	subfolder := strings.ReplaceAll(name, " ", "_")
-	re := regexp.MustCompile(`[^a-zA-Z0-9._-]`)
-	subfolder = re.ReplaceAllString(subfolder, "")
-	subfolder = strings.TrimLeft(subfolder, ".")
-
-	err := os.MkdirAll(outputDir+"/"+subfolder, 0755)
-	if err != nil {
-		return err
-	}
+	source := stream.GetString("source")
 
 	cmd := exec.CommandContext(ctx,
 		"ffmpeg",
 		"-loglevel", "error",
 		"-rtsp_transport", "tcp",
-		"-i", rtspUrl,
+		"-i", source,
 		"-c:a", "aac",
 		"-s", "hd1080",
 		"-c:v", "libsvtav1",
@@ -98,7 +111,7 @@ func encodeStream(ctx context.Context, wg *sync.WaitGroup, outputDir string, str
 		"-hls_list_size", "5",
 		"-hls_segment_type", "fmp4",
 		"-hls_flags", "delete_segments",
-		outputDir+"/"+subfolder+"/"+name+".m3u8",
+		STREAM_OUTPUT_DIR+"/"+stream.Id+".m3u8",
 	)
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr

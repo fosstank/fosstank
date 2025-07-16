@@ -103,7 +103,6 @@ func encodeStream(ctx context.Context, wg *sync.WaitGroup, stream *core.Record) 
 		"-c:a", "aac",
 		"-s", "hd1080",
 		"-c:v", "libsvtav1",
-		"-svtav1-params", "verbosity=ERROR",
 		"-preset", "10",
 		"-b:v", "500k",
 		"-f", "hls",

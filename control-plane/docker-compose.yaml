@@ -10,3 +10,21 @@ services:
     volumes:
       - ./streams:/streams
       - ./pb_data:/pb_data
+  # Minio is only used for testing locally, in production you'll use an actual S3 bucket.
+  # Don't forget to make a "streams" bucket using the dashboard at localhost:9001.
+  # Then enter the credentials in the pocketbase admin dashboard.
+  # TODO: Automate the local bucket creation
+  minio:
+    image: minio/minio:latest
+    user: 1000:1000
+    container_name: minio
+    restart: unless-stopped
+    environment:
+      MINIO_ROOT_USER: minioadmin
+      MINIO_ROOT_PASSWORD: minioadmin
+    command: server /data --console-address ":9001"
+    ports:
+      - 9000:9000
+      - 9001:9001
+    volumes:
+      - ./s3:/data

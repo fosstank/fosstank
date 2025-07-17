@@ -1,15 +1,18 @@
 package main
 
 import (
+	"bytes"
 	"context"
 	"embed"
 	"io/fs"
 	"log"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"strings"
 	"sync"
 
+	"github.com/fsnotify/fsnotify"
 	"github.com/pocketbase/pocketbase"
 	"github.com/pocketbase/pocketbase/apis"
 	"github.com/pocketbase/pocketbase/core"
@@ -72,11 +75,29 @@ func main() {
 		}
 
 		for _, stream := range streams {
+			if stream.GetString("source") == "" {
+				continue
+			}
+
 			wg.Add(1)
 			go encodeStream(ctx, &wg, stream)
 		}
 		return e.Next()
 	})
+
+	// Sync stream output dir to S3 bucket
+	watcher, err := fsnotify.NewWatcher()
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer watcher.Close()
+
+	go syncS3(watcher)
+
+	err = watcher.Add(STREAM_OUTPUT_DIR)
+	if err != nil {
+		log.Fatal(err)
+	}
 
 	// Kill ffmpeg processes
 	app.OnTerminate().BindFunc(func(e *core.TerminateEvent) error {
@@ -90,11 +111,55 @@ func main() {
 	}
 }
 
+func syncS3(watcher *fsnotify.Watcher) {
+	for {
+		select {
+		case event, ok := <-watcher.Events:
+			if !ok {
+				continue
+			}
+
+			// ffmpeg writes the .m3u8 to a .tmp file before committing it. We don't care about these events.
+			if filepath.Ext(event.Name) == ".tmp" {
+				continue
+			}
+
+			if event.Has(fsnotify.Create) {
+				// When ffmpeg updates the .m3u8 playlist file, we know it is done writing the latest .ts file.
+				// Any other create events we don't care about.
+				if filepath.Ext(event.Name) != ".m3u8" {
+					continue
+				}
+
+				playlistData, err := os.ReadFile(event.Name)
+				if err != nil {
+					// retry?
+					continue
+				}
+
+				b := bytes.TrimRight(playlistData, "\r\n")
+				lines := bytes.Split(b, []byte("\n"))
+				latestSegment := string(lines[len(lines)-1])
+				log.Println("playlist updated, safe to upload:", latestSegment)
+			} else if event.Has(fsnotify.Remove) {
+				log.Println("removed file:", event.Name)
+			}
+		case err, ok := <-watcher.Errors:
+			if !ok {
+				continue
+			}
+			log.Println("error:", err)
+		}
+	}
+}
+
 func encodeStream(ctx context.Context, wg *sync.WaitGroup, stream *core.Record) error {
 	defer wg.Done()
 
 	source := stream.GetString("source")
 
+	// FIXME: This will leak credentials if they are in the source url and ffmpeg decides to log it(e.g. if the rtsp device is off)
+	// https://trac.ffmpeg.org/ticket/11247
 	cmd := exec.CommandContext(ctx,
 		"ffmpeg",
 		"-loglevel", "error",

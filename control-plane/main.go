@@ -17,6 +17,7 @@ import (
 	"github.com/pocketbase/pocketbase/apis"
 	"github.com/pocketbase/pocketbase/core"
 	"github.com/pocketbase/pocketbase/plugins/migratecmd"
+	"github.com/pocketbase/pocketbase/tools/filesystem"
 
 	_ "control-plane/migrations"
 )
@@ -53,16 +54,12 @@ func main() {
 		return se.Next()
 	})
 
-	// Create stream output dir
-	err := os.MkdirAll(STREAM_OUTPUT_DIR, 0755)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	// Serve stream output dir
-	app.OnServe().BindFunc(func(se *core.ServeEvent) error {
-		se.Router.GET("/"+STREAM_OUTPUT_DIR+"/{path...}", apis.Static(os.DirFS(STREAM_OUTPUT_DIR), false))
-		return se.Next()
+	app.OnRecordCreate("streams").BindFunc(func(e *core.RecordEvent) error {
+		err := os.MkdirAll(STREAM_OUTPUT_DIR+"/"+e.Record.Id, 0755)
+		if err != nil {
+			return err
+		}
+		return e.Next()
 	})
 
 	// Start ffmpeg processes
@@ -79,25 +76,22 @@ func main() {
 				continue
 			}
 
+			err = os.MkdirAll(STREAM_OUTPUT_DIR+"/"+stream.Id, 0755)
+			if err != nil {
+				log.Fatal(err)
+			}
+
 			wg.Add(1)
-			go encodeStream(ctx, &wg, stream)
+			go encodeStream(ctx, &wg, app, stream)
 		}
 		return e.Next()
 	})
 
-	// Sync stream output dir to S3 bucket
-	watcher, err := fsnotify.NewWatcher()
-	if err != nil {
-		log.Fatal(err)
-	}
-	defer watcher.Close()
-
-	go syncS3(watcher)
-
-	err = watcher.Add(STREAM_OUTPUT_DIR)
-	if err != nil {
-		log.Fatal(err)
-	}
+	// Serve stream output dir
+	app.OnServe().BindFunc(func(se *core.ServeEvent) error {
+		se.Router.GET("/"+STREAM_OUTPUT_DIR+"/{path...}", apis.Static(os.DirFS(STREAM_OUTPUT_DIR), false))
+		return se.Next()
+	})
 
 	// Kill ffmpeg processes
 	app.OnTerminate().BindFunc(func(e *core.TerminateEvent) error {
@@ -106,12 +100,17 @@ func main() {
 		return e.Next()
 	})
 
+	app.OnRecordUpdateRequest("streams").BindFunc(func(e *core.RecordRequestEvent) error {
+
+		return e.Next()
+	})
+
 	if err := app.Start(); err != nil {
 		log.Fatal(err)
 	}
 }
 
-func syncS3(watcher *fsnotify.Watcher) {
+func syncS3(app *pocketbase.PocketBase, stream *core.Record, watcher *fsnotify.Watcher) {
 	for {
 		select {
 		case event, ok := <-watcher.Events:
@@ -134,15 +133,57 @@ func syncS3(watcher *fsnotify.Watcher) {
 				playlistData, err := os.ReadFile(event.Name)
 				if err != nil {
 					// retry?
+					log.Println("error reading playlist data:", event.Name)
 					continue
 				}
 
 				b := bytes.TrimRight(playlistData, "\r\n")
 				lines := bytes.Split(b, []byte("\n"))
 				latestSegment := string(lines[len(lines)-1])
-				log.Println("playlist updated, safe to upload:", latestSegment)
+
+				// Upload segment to S3
+				f, err := filesystem.NewFileFromPath(STREAM_OUTPUT_DIR + "/" + stream.Id + "/" + latestSegment)
+				// Pocketbase will automatically add random chars to the end of the filename.
+				// The .m3u8 playlist requires we keep the name as is.
+				f.Name = f.OriginalName
+				if err != nil {
+					log.Println("error creating filesystem for segment:", latestSegment)
+					continue
+				}
+				stream.Set("artifacts+", f)
+				err = app.Save(stream)
+				if err != nil {
+					// FIXME: retry?
+					log.Println("error saving segment to S3:", latestSegment)
+					continue
+				}
+
+				// After segment upload, upload playlist to S3
+				f, err = filesystem.NewFileFromPath(event.Name)
+				// Pocketbase will automatically add random chars to the end of the filename.
+				// The .m3u8 playlist requires we keep the name as is.
+				f.Name = f.OriginalName
+				if err != nil {
+					log.Println("error creating filesystem for playlist:", filepath.Base(event.Name))
+					continue
+				}
+				stream.Set("artifacts+", f)
+				err = app.Save(stream)
+				if err != nil {
+					// FIXME: retry?
+					log.Println("error saving playlist to S3:", filepath.Base(event.Name))
+					continue
+				}
 			} else if event.Has(fsnotify.Remove) {
-				log.Println("removed file:", event.Name)
+				// ffmpeg has deleted a file(because of the -hls_list_size flag).
+				// We need to delete it in S3.
+				stream.Set("artifacts-", filepath.Base(event.Name))
+				err := app.Save(stream)
+				if err != nil {
+					// FIXME: retry?
+					log.Println("error deleting segment from S3:", filepath.Base(event.Name))
+					continue
+				}
 			}
 		case err, ok := <-watcher.Errors:
 			if !ok {
@@ -153,8 +194,24 @@ func syncS3(watcher *fsnotify.Watcher) {
 	}
 }
 
-func encodeStream(ctx context.Context, wg *sync.WaitGroup, stream *core.Record) error {
+func encodeStream(ctx context.Context, wg *sync.WaitGroup, app *pocketbase.PocketBase, stream *core.Record) error {
 	defer wg.Done()
+
+	// Sync stream outputs to S3 bucket
+	if app.Settings().S3.Enabled {
+		watcher, err := fsnotify.NewWatcher()
+		if err != nil {
+			log.Fatal(err)
+		}
+		defer watcher.Close()
+
+		go syncS3(app, stream, watcher)
+
+		err = watcher.Add(STREAM_OUTPUT_DIR + "/" + stream.Id)
+		if err != nil {
+			log.Fatal(err)
+		}
+	}
 
 	source := stream.GetString("source")
 
@@ -175,7 +232,7 @@ func encodeStream(ctx context.Context, wg *sync.WaitGroup, stream *core.Record) 
 		"-hls_list_size", "5",
 		"-hls_segment_type", "fmp4",
 		"-hls_flags", "delete_segments",
-		STREAM_OUTPUT_DIR+"/"+stream.Id+".m3u8",
+		STREAM_OUTPUT_DIR+"/"+stream.Id+"/"+stream.Id+".m3u8",
 	)
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr

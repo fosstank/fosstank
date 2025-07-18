@@ -15,9 +15,9 @@ export default function Home() {
   return (
     <div className="grid grid-cols-1 m-4">
       <h1 className="text-4xl text-center">Fosstank Control Plane</h1>
-      <div className="grid grid-cols-3 gap-4">
+      <div className="grid grid-cols-3">
         {streams.map(stream => (
-          <HLSPlayer key={stream.id} className="w-full" src={`/streams/${stream.id}.m3u8`}></HLSPlayer>
+          <HLSPlayer key={stream.id} autoPlay controls={false} className="w-full" src={`/streams/${stream.id}/${stream.id}.m3u8`}></HLSPlayer>
         ))}
       </div>
     </div>

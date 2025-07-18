@@ -10,7 +10,7 @@ export default function Home() {
   const [streams, setStreams] = useState<Stream[]>([]);
   useEffect(() => {
     pb.collection("streams").getFullList().then(streams => setStreams(streams))
-  })
+  }, [])
 
   return (
     <div className="grid grid-cols-1 m-4">

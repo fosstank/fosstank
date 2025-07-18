@@ -2,9 +2,9 @@ FROM alpine:3.22 AS ui-build
 WORKDIR /build
 RUN apk add npm
 
-COPY ./ui/package.json ./ui/package-lock.json ./
+COPY --from=ui package.json package-lock.json ./
 RUN npm install
-COPY ui/. .
+COPY --from=ui . .
 RUN npm run build
 
 FROM alpine:3.22 AS go-build

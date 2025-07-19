@@ -52,9 +52,9 @@ const COLOR_CLASSES: { [key in Color]: { text: string, border: string, hover: st
 };
 
 export default function InfoPanel({ title, content, clickable, borderLeft = false, color = 'purple' }: MessagePanelProps) {
-    var borderLeftClass = borderLeft ? 'border-l-2' : '';
-    var colorClass = COLOR_CLASSES[color];
-    var clickableClass = clickable ? `${colorClass.hover} transition-colors cursor-pointer border border-zinc-800` : '';
+    const borderLeftClass = borderLeft ? 'border-l-2' : '';
+    const colorClass = COLOR_CLASSES[color];
+    const clickableClass = clickable ? `${colorClass.hover} transition-colors cursor-pointer border border-zinc-800` : '';
 
     return (
         <div className={`bg-zinc-900 p-3 text-zinc-300 text-sm ${borderLeftClass} ${colorClass.border} ${clickableClass}`}>

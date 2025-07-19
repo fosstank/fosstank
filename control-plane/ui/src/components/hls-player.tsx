@@ -12,6 +12,7 @@ interface HLSPlayerProps {
 
 export default function HLSPlayer({ src, className, autoPlay = false, controls = true }: HLSPlayerProps) {
     const videoRef = useRef<HTMLVideoElement | null>(null);
+    const containerClassName = `relative overflow-hidden border-2 border-zinc-700/50 shadow-inner shadow-black/50 ${className || ''}`;
 
     useEffect(() => {
         if (!videoRef.current) return;
@@ -37,11 +38,13 @@ export default function HLSPlayer({ src, className, autoPlay = false, controls =
     }, [src]);
 
     return (
-        <video
-            ref={videoRef}
-            className={className}
-            autoPlay={autoPlay}
-            controls={controls}
-        />
+        <div className={containerClassName}>
+            <video
+                ref={videoRef}
+                className="w-full h-full object-cover"
+                autoPlay={autoPlay}
+                controls={controls}
+            />
+        </div>
     );
 }

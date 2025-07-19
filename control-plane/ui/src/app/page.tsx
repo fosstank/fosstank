@@ -4,6 +4,7 @@ import { Stream, TypedPocketBase } from "@/lib/pocketbase";
 import PocketBase from 'pocketbase';
 import { useEffect, useState } from "react";
 import Panel from "@/components/panel";
+import InfoPanel from "@/components/info-panel";
 
 const pb = new PocketBase('http://127.0.0.1:8090') as TypedPocketBase;
 
@@ -81,14 +82,8 @@ export default function Home() {
             {/* Announcements Panel */}
             <Panel title="Announcements">
               <div className="space-y-3">
-                <div className="bg-zinc-900 p-3 text-zinc-300 text-sm border-l-2 border-cyan-500/50">
-                  <div className="text-cyan-500/90 text-xs mb-1">SYSTEM UPDATE</div>
-                  <p>New monitoring systems installed in Sector 7</p>
-                </div>
-                <div className="bg-zinc-900 p-3 text-zinc-300 text-sm border-l-2 border-purple-500/50">
-                  <div className="text-purple-500/90 text-xs mb-1">MAINTENANCE</div>
-                  <p>Scheduled maintenance: July 20, 0200-0400</p>
-                </div>
+                <InfoPanel title="SYSTEM UPDATE" content="New monitoring systems installed in Sector 7" color='cyan' borderLeft />
+                <InfoPanel title="MAINTENANCE" content="Scheduled maintenance: July 20, 0200-0400" color='purple' borderLeft />
               </div>
             </Panel>
 
@@ -112,10 +107,7 @@ export default function Home() {
             {/* Ads Panel */}
             <Panel title="Sponsored">
               <div className="space-y-3">
-                <div className="bg-zinc-900 p-3 text-zinc-300 text-sm border border-zinc-800 hover:border-cyan-500/20 transition-colors cursor-pointer">
-                  <div className="text-purple-500/90 text-xs mb-1">FEATURED</div>
-                  <p>Advanced Monitoring Solutions - Learn More</p>
-                </div>
+                <InfoPanel title="FEATURED" content="Advanced Monitoring Solutions - Learn More" color='purple' clickable />
               </div>
             </Panel>
           </div>
@@ -168,15 +160,12 @@ export default function Home() {
                 {activeTab === 'log' && (
                   <div className="flex-1 overflow-y-auto space-y-3 mb-4 max-h-[calc(100vh-15rem)]">
                     {systemLogs.map(msg => (
-                      <div key={msg.id} className="relative group">
-                        <div className="absolute -inset-[1px] bg-gradient-to-r from-cyan-500/10 to-purple-500/10 rounded-sm blur-[1px] opacity-0 group-hover:opacity-100 transition-opacity"></div>
-                        <div className="relative bg-zinc-900 p-3 text-sm">
-                          <div className="font-mono text-xs mb-1 text-cyan-500/90">
-                            {msg.timestamp}
-                          </div>
-                          <div className="text-zinc-300">{msg.text}</div>
-                        </div>
-                      </div>
+                      <InfoPanel
+                        key={msg.id}
+                        title={msg.timestamp}
+                        content={msg.text}
+                        color='cyan'
+                      />
                     ))}
                   </div>
                 )}

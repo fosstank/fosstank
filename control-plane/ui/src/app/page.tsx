@@ -3,6 +3,7 @@ import HLSPlayer from "@/components/hls-player";
 import { Stream, TypedPocketBase } from "@/lib/pocketbase";
 import PocketBase from 'pocketbase';
 import { useEffect, useState } from "react";
+import Panel from "@/components/panel";
 
 const pb = new PocketBase('http://127.0.0.1:8090') as TypedPocketBase;
 
@@ -78,10 +79,7 @@ export default function Home() {
           {/* Left Column */}
           <div className="w-80 space-y-6">
             {/* Announcements Panel */}
-            <div className="bg-zinc-950/80 border border-zinc-800/50 shadow-inner shadow-black p-4">
-              <h2 className="text-cyan-500 font-bold mb-4 uppercase tracking-wider [text-shadow:0_0_10px_theme(colors.cyan.500/40)]">
-                Announcements
-              </h2>
+            <Panel title="Announcements">
               <div className="space-y-3">
                 <div className="bg-zinc-900 p-3 text-zinc-300 text-sm border-l-2 border-cyan-500/50">
                   <div className="text-cyan-500/90 text-xs mb-1">SYSTEM UPDATE</div>
@@ -92,13 +90,10 @@ export default function Home() {
                   <p>Scheduled maintenance: July 20, 0200-0400</p>
                 </div>
               </div>
-            </div>
+            </Panel>
 
             {/* Polls Panel */}
-            <div className="bg-zinc-950/80 border border-zinc-800/50 shadow-inner shadow-black p-4">
-              <h2 className="text-cyan-500 font-bold mb-4 uppercase tracking-wider [text-shadow:0_0_10px_theme(colors.cyan.500/40)]">
-                Active Polls
-              </h2>
+            <Panel title="Active Polls">
               <div className="space-y-4">
                 <div className="bg-zinc-900 p-3">
                   <p className="text-zinc-300 text-sm mb-2">Preferred monitoring schedule?</p>
@@ -112,130 +107,133 @@ export default function Home() {
                   </div>
                 </div>
               </div>
-            </div>
+            </Panel>
 
             {/* Ads Panel */}
-            <div className="bg-zinc-950/80 border border-zinc-800/50 shadow-inner shadow-black p-4">
-              <h2 className="text-cyan-500 font-bold mb-4 uppercase tracking-wider [text-shadow:0_0_10px_theme(colors.cyan.500/40)]">
-                Sponsored
-              </h2>
+            <Panel title="Sponsored">
               <div className="space-y-3">
                 <div className="bg-zinc-900 p-3 text-zinc-300 text-sm border border-zinc-800 hover:border-cyan-500/20 transition-colors cursor-pointer">
                   <div className="text-purple-500/90 text-xs mb-1">FEATURED</div>
                   <p>Advanced Monitoring Solutions - Learn More</p>
                 </div>
               </div>
-            </div>
+            </Panel>
           </div>
 
           {/* Main Content - Streams */}
           <div className="flex-1">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 p-4 bg-zinc-950/80 border border-zinc-800/50 shadow-inner shadow-black">
-              {streams.map(stream => (
-                <HLSPlayer
-                  key={stream.id}
-                  autoPlay
-                  controls={false}
-                  src={`/streams/${stream.id}/${stream.id}.m3u8`}
-                />
-              ))}
-            </div>
+            <Panel>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {streams.map(stream => (
+                  <HLSPlayer
+                    key={stream.id}
+                    autoPlay
+                    controls={false}
+                    src={`/streams/${stream.id}/${stream.id}.m3u8`}
+                  />
+                ))}
+              </div>
+            </Panel>
           </div>
 
           {/* Chat Column */}
-          <div className="w-96 bg-zinc-950/80 border border-zinc-800/50 shadow-inner shadow-black p-4 flex flex-col">
-            {/* Tabs */}
-            <div className="flex gap-4 mb-4">
-              <button
-                onClick={() => setActiveTab('log')}
-                className={`text-sm font-bold uppercase tracking-wider transition-colors
-                  ${activeTab === 'log'
-                    ? 'text-cyan-500 [text-shadow:0_0_10px_theme(colors.cyan.500/40)]'
-                    : 'text-zinc-500 hover:text-zinc-400'
-                  }`}
-              >
-                System Log
-              </button>
-              <button
-                onClick={() => setActiveTab('chat')}
-                className={`text-sm font-bold uppercase tracking-wider transition-colors
-                  ${activeTab === 'chat'
-                    ? 'text-cyan-500 [text-shadow:0_0_10px_theme(colors.cyan.500/40)]'
-                    : 'text-zinc-500 hover:text-zinc-400'
-                  }`}
-              >
-                Messages
-              </button>
-            </div>
+          <div className="w-96">
+            <Panel className="h-full">
+              <div className="flex flex-col h-full">
+                {/* Tabs */}
+                <div className="flex gap-4 mb-4">
+                  <button
+                    onClick={() => setActiveTab('log')}
+                    className={`text-sm font-bold uppercase tracking-wider transition-colors
+                      ${activeTab === 'log'
+                        ? 'text-cyan-500 [text-shadow:0_0_10px_theme(colors.cyan.500/40)]'
+                        : 'text-zinc-500 hover:text-zinc-400'
+                      }`}
+                  >
+                    System Log
+                  </button>
+                  <button
+                    onClick={() => setActiveTab('chat')}
+                    className={`text-sm font-bold uppercase tracking-wider transition-colors
+                      ${activeTab === 'chat'
+                        ? 'text-cyan-500 [text-shadow:0_0_10px_theme(colors.cyan.500/40)]'
+                        : 'text-zinc-500 hover:text-zinc-400'
+                      }`}
+                  >
+                    Messages
+                  </button>
+                </div>
 
-            {/* System Log Content */}
-            {activeTab === 'log' && (
-              <div className="flex-1 overflow-y-auto space-y-3 mb-4 max-h-[calc(100vh-15rem)]">
-                {systemLogs.map(msg => (
-                  <div key={msg.id} className="relative group">
-                    <div className="absolute -inset-[1px] bg-gradient-to-r from-cyan-500/10 to-purple-500/10 rounded-sm blur-[1px] opacity-0 group-hover:opacity-100 transition-opacity"></div>
-                    <div className="relative bg-zinc-900 p-3 text-sm">
-                      <div className="font-mono text-xs mb-1 text-cyan-500/90">
-                        {msg.timestamp}
-                      </div>
-                      <div className="text-zinc-300">{msg.text}</div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-
-            {/* Chat Messages Content */}
-            {activeTab === 'chat' && (
-              <>
-                <div className="flex-1 overflow-y-auto space-y-4 mb-4 max-h-[calc(100vh-15rem)]">
-                  {chatMessages.map(msg => (
-                    <div key={msg.id} className="relative group">
-                      <div className="absolute -inset-[1px] bg-gradient-to-r from-cyan-500/10 to-purple-500/10 rounded-sm blur-[1px] opacity-0 group-hover:opacity-100 transition-opacity"></div>
-                      <div className="relative bg-zinc-900 p-3 text-sm">
-                        <div className="flex items-start gap-3">
-                          <img
-                            src={msg.user.avatar}
-                            alt={msg.user.name}
-                            className="w-8 h-8 rounded-full bg-zinc-800"
-                          />
-                          <div className="flex-1 min-w-0">
-                            <div className="flex items-center justify-between gap-2 mb-1">
-                              <span className="font-medium text-zinc-300">{msg.user.name}</span>
-                              <span className="font-mono text-xs text-zinc-500">{msg.timestamp}</span>
-                            </div>
-                            <p className="text-zinc-300 break-words">{msg.text}</p>
-                            {msg.cameraName && (
-                              <div className="mt-2 text-xs text-cyan-500/70 font-mono">
-                                Viewing: {msg.cameraName}
-                              </div>
-                            )}
+                {/* System Log Content */}
+                {activeTab === 'log' && (
+                  <div className="flex-1 overflow-y-auto space-y-3 mb-4 max-h-[calc(100vh-15rem)]">
+                    {systemLogs.map(msg => (
+                      <div key={msg.id} className="relative group">
+                        <div className="absolute -inset-[1px] bg-gradient-to-r from-cyan-500/10 to-purple-500/10 rounded-sm blur-[1px] opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                        <div className="relative bg-zinc-900 p-3 text-sm">
+                          <div className="font-mono text-xs mb-1 text-cyan-500/90">
+                            {msg.timestamp}
                           </div>
+                          <div className="text-zinc-300">{msg.text}</div>
                         </div>
                       </div>
+                    ))}
+                  </div>
+                )}
+
+                {/* Chat Messages Content */}
+                {activeTab === 'chat' && (
+                  <>
+                    <div className="flex-1 overflow-y-auto space-y-4 mb-4 max-h-[calc(100vh-15rem)]">
+                      {chatMessages.map(msg => (
+                        <div key={msg.id} className="relative group">
+                          <div className="absolute -inset-[1px] bg-gradient-to-r from-cyan-500/10 to-purple-500/10 rounded-sm blur-[1px] opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                          <div className="relative bg-zinc-900 p-3 text-sm">
+                            <div className="flex items-start gap-3">
+                              <img
+                                src={msg.user.avatar}
+                                alt={msg.user.name}
+                                className="w-8 h-8 rounded-full bg-zinc-800"
+                              />
+                              <div className="flex-1 min-w-0">
+                                <div className="flex items-center justify-between gap-2 mb-1">
+                                  <span className="font-medium text-zinc-300">{msg.user.name}</span>
+                                  <span className="font-mono text-xs text-zinc-500">{msg.timestamp}</span>
+                                </div>
+                                <p className="text-zinc-300 break-words">{msg.text}</p>
+                                {msg.cameraName && (
+                                  <div className="mt-2 text-xs text-cyan-500/70 font-mono">
+                                    Viewing: {msg.cameraName}
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
                     </div>
-                  ))}
-                </div>
-                <form onSubmit={handleSendMessage} className="relative">
-                  <input
-                    type="text"
-                    value={inputMessage}
-                    onChange={(e) => setInputMessage(e.target.value)}
-                    className="w-full bg-zinc-900 text-zinc-300 px-4 py-2 pr-12 rounded-sm border border-zinc-800 focus:border-cyan-500/50 focus:outline-none focus:ring-1 focus:ring-cyan-500/20 placeholder-zinc-600"
-                    placeholder="Type a message..."
-                  />
-                  <button
-                    type="submit"
-                    className="absolute right-2 top-1/2 -translate-y-1/2 text-cyan-500 hover:text-cyan-400 focus:outline-none disabled:opacity-50"
-                    disabled={!inputMessage.trim()}
-                  >
-                    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 5l7 7-7 7M5 5l7 7-7 7" />
-                    </svg>
-                  </button>
-                </form>
-              </>
-            )}
+                    <form onSubmit={handleSendMessage} className="relative">
+                      <input
+                        type="text"
+                        value={inputMessage}
+                        onChange={(e) => setInputMessage(e.target.value)}
+                        className="w-full bg-zinc-900 text-zinc-300 px-4 py-2 pr-12 rounded-sm border border-zinc-800 focus:border-cyan-500/50 focus:outline-none focus:ring-1 focus:ring-cyan-500/20 placeholder-zinc-600"
+                        placeholder="Type a message..."
+                      />
+                      <button
+                        type="submit"
+                        className="absolute right-2 top-1/2 -translate-y-1/2 text-cyan-500 hover:text-cyan-400 focus:outline-none disabled:opacity-50"
+                        disabled={!inputMessage.trim()}
+                      >
+                        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 5l7 7-7 7M5 5l7 7-7 7" />
+                        </svg>
+                      </button>
+                    </form>
+                  </>
+                )}
+              </div>
+            </Panel>
           </div>
         </div>
       </div>

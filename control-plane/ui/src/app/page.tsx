@@ -132,20 +132,12 @@ export default function Home() {
           <div className="flex-1">
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 p-4 bg-zinc-950/80 border border-zinc-800/50 shadow-inner shadow-black">
               {streams.map(stream => (
-                <div key={stream.id} className="group relative">
-                  <div className="absolute inset-0 bg-gradient-to-br from-cyan-500/5 to-purple-500/5 group-hover:from-cyan-500/10 group-hover:to-purple-500/10 transition-all duration-300"></div>
-                  <div className="transform transition-all duration-300 group-hover:translate-x-1 group-hover:-translate-y-1">
-                    <div className="relative">
-                      <div className="absolute -inset-[1px] bg-gradient-to-r from-cyan-500/25 to-purple-500/25 rounded-sm blur-[2px]"></div>
-                      <HLSPlayer
-                        autoPlay
-                        controls={false}
-                        className="aspect-video relative"
-                        src={`/streams/${stream.id}/${stream.id}.m3u8`}
-                      />
-                    </div>
-                  </div>
-                </div>
+                <HLSPlayer
+                  key={stream.id}
+                  autoPlay
+                  controls={false}
+                  src={`/streams/${stream.id}/${stream.id}.m3u8`}
+                />
               ))}
             </div>
           </div>
@@ -182,11 +174,11 @@ export default function Home() {
                 {systemLogs.map(msg => (
                   <div key={msg.id} className="relative group">
                     <div className="absolute -inset-[1px] bg-gradient-to-r from-cyan-500/10 to-purple-500/10 rounded-sm blur-[1px] opacity-0 group-hover:opacity-100 transition-opacity"></div>
-                    <div className="relative bg-zinc-900 p-3 text-sm overflow-hidden">
-                      <div className="font-mono text-xs mb-1 text-cyan-500/90 truncate">
+                    <div className="relative bg-zinc-900 p-3 text-sm">
+                      <div className="font-mono text-xs mb-1 text-cyan-500/90">
                         {msg.timestamp}
                       </div>
-                      <div className="text-zinc-300 break-words">{msg.text}</div>
+                      <div className="text-zinc-300">{msg.text}</div>
                     </div>
                   </div>
                 ))}
@@ -200,21 +192,21 @@ export default function Home() {
                   {chatMessages.map(msg => (
                     <div key={msg.id} className="relative group">
                       <div className="absolute -inset-[1px] bg-gradient-to-r from-cyan-500/10 to-purple-500/10 rounded-sm blur-[1px] opacity-0 group-hover:opacity-100 transition-opacity"></div>
-                      <div className="relative bg-zinc-900 p-3 text-sm overflow-hidden">
+                      <div className="relative bg-zinc-900 p-3 text-sm">
                         <div className="flex items-start gap-3">
                           <img
                             src={msg.user.avatar}
                             alt={msg.user.name}
-                            className="w-8 h-8 shrink-0 rounded-full bg-zinc-800"
+                            className="w-8 h-8 rounded-full bg-zinc-800"
                           />
-                          <div className="flex-1 min-w-0 overflow-hidden">
+                          <div className="flex-1 min-w-0">
                             <div className="flex items-center justify-between gap-2 mb-1">
-                              <span className="font-medium text-zinc-300 truncate">{msg.user.name}</span>
-                              <span className="font-mono text-xs text-zinc-500 shrink-0">{msg.timestamp}</span>
+                              <span className="font-medium text-zinc-300">{msg.user.name}</span>
+                              <span className="font-mono text-xs text-zinc-500">{msg.timestamp}</span>
                             </div>
                             <p className="text-zinc-300 break-words">{msg.text}</p>
                             {msg.cameraName && (
-                              <div className="mt-2 text-xs text-cyan-500/70 font-mono truncate">
+                              <div className="mt-2 text-xs text-cyan-500/70 font-mono">
                                 Viewing: {msg.cameraName}
                               </div>
                             )}

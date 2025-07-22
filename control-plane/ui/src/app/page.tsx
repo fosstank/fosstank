@@ -3,8 +3,9 @@ import HLSPlayer from "@/components/hls-player";
 import { Stream, TypedPocketBase } from "@/lib/pocketbase";
 import PocketBase from 'pocketbase';
 import { useEffect, useState } from "react";
-import Panel from "@/components/panel";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import InfoPanel from "@/components/info-panel";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 const pb = new PocketBase('http://127.0.0.1:8090') as TypedPocketBase;
 
@@ -13,8 +14,6 @@ export default function Home() {
   useEffect(() => {
     pb.collection("streams").getFullList().then(streams => setStreams(streams))
   }, [])
-
-  const [activeTab, setActiveTab] = useState<'log' | 'chat'>('log');
 
   const [systemLogs] = useState([
     { id: 1, text: "Tank pressure nominal", timestamp: "18:42:05", type: "system" },
@@ -80,103 +79,98 @@ export default function Home() {
           {/* Left Column */}
           <div className="w-80 space-y-6">
             {/* Announcements Panel */}
-            <Panel title="Announcements">
-              <div className="space-y-3">
-                <InfoPanel title="SYSTEM UPDATE" content="New monitoring systems installed in Sector 7" color='cyan' borderLeft />
-                <InfoPanel title="MAINTENANCE" content="Scheduled maintenance: July 20, 0200-0400" color='purple' borderLeft />
-              </div>
-            </Panel>
+            <Card>
+              <CardHeader>
+                <CardTitle>Announcements</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-3">
+                  <InfoPanel title="SYSTEM UPDATE" content="New monitoring systems installed in Sector 7" color='cyan' borderLeft />
+                  <InfoPanel title="MAINTENANCE" content="Scheduled maintenance: July 20, 0200-0400" color='purple' borderLeft />
+                </div>
+              </CardContent>
+            </Card>
 
             {/* Polls Panel */}
-            <Panel title="Active Polls">
-              <div className="space-y-4">
-                <div className="bg-zinc-900 p-3">
-                  <p className="text-zinc-300 text-sm mb-2">Preferred monitoring schedule?</p>
-                  <div className="space-y-2">
-                    <button className="w-full text-left text-xs bg-zinc-800 p-2 text-zinc-400 hover:bg-zinc-800/80 hover:text-cyan-500/90 transition-colors">
-                      □ 4-hour rotations
-                    </button>
-                    <button className="w-full text-left text-xs bg-zinc-800 p-2 text-zinc-400 hover:bg-zinc-800/80 hover:text-cyan-500/90 transition-colors">
-                      □ 6-hour rotations
-                    </button>
+            <Card>
+              <CardHeader>
+                <CardTitle>Active Polls</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  <div className="bg-zinc-900 p-3">
+                    <p className="text-zinc-300 text-sm mb-2">Preferred monitoring schedule?</p>
+                    <div className="space-y-2">
+                      <button className="w-full text-left text-xs bg-zinc-800 p-2 text-zinc-400 hover:bg-zinc-800/80 hover:text-cyan-500/90 transition-colors">
+                        □ 4-hour rotations
+                      </button>
+                      <button className="w-full text-left text-xs bg-zinc-800 p-2 text-zinc-400 hover:bg-zinc-800/80 hover:text-cyan-500/90 transition-colors">
+                        □ 6-hour rotations
+                      </button>
+                    </div>
                   </div>
                 </div>
-              </div>
-            </Panel>
+              </CardContent>
+            </Card>
 
             {/* Ads Panel */}
-            <Panel title="Sponsored">
-              <div className="space-y-3">
-                <InfoPanel title="FEATURED" content="Advanced Monitoring Solutions - Learn More" color='purple' clickable />
-              </div>
-            </Panel>
+            <Card>
+              <CardHeader>
+                <CardTitle>Sponsored</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-3">
+                  <InfoPanel title="FEATURED" content="Advanced Monitoring Solutions - Learn More" color='purple' clickable />
+                </div>
+              </CardContent>
+            </Card>
           </div>
 
           {/* Main Content - Streams */}
           <div className="flex-1">
-            <Panel>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {streams.map(stream => (
-                  <HLSPlayer
-                    key={stream.id}
-                    autoPlay
-                    controls={false}
-                    src={`/streams/${stream.id}/${stream.id}.m3u8`}
-                  />
-                ))}
-              </div>
-            </Panel>
+            <Card>
+              <CardContent>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {streams.map(stream => (
+                    <HLSPlayer
+                      key={stream.id}
+                      autoPlay
+                      controls={false}
+                      src={`/streams/${stream.id}/${stream.id}.m3u8`}
+                    />
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
           </div>
 
           {/* Chat Column */}
           <div className="w-96">
-            <Panel className="h-full">
-              <div className="flex flex-col h-full">
-                {/* Tabs */}
-                <div className="flex gap-4 mb-4">
-                  <button
-                    onClick={() => setActiveTab('log')}
-                    className={`text-sm font-bold uppercase tracking-wider transition-colors
-                      ${activeTab === 'log'
-                        ? 'text-cyan-500 [text-shadow:0_0_10px_theme(colors.cyan.500/40)]'
-                        : 'text-zinc-500 hover:text-zinc-400'
-                      }`}
-                  >
-                    System Log
-                  </button>
-                  <button
-                    onClick={() => setActiveTab('chat')}
-                    className={`text-sm font-bold uppercase tracking-wider transition-colors
-                      ${activeTab === 'chat'
-                        ? 'text-cyan-500 [text-shadow:0_0_10px_theme(colors.cyan.500/40)]'
-                        : 'text-zinc-500 hover:text-zinc-400'
-                      }`}
-                  >
-                    Messages
-                  </button>
-                </div>
-
-                {/* System Log Content */}
-                {activeTab === 'log' && (
-                  <div className="flex-1 overflow-y-auto space-y-3 mb-4 max-h-[calc(100vh-15rem)]">
-                    {systemLogs.map(msg => (
-                      <InfoPanel
-                        key={msg.id}
-                        title={msg.timestamp}
-                        content={msg.text}
-                        color='cyan'
-                      />
-                    ))}
-                  </div>
-                )}
-
-                {/* Chat Messages Content */}
-                {activeTab === 'chat' && (
-                  <>
-                    <div className="flex-1 overflow-y-auto space-y-4 mb-4 max-h-[calc(100vh-15rem)]">
+            <Card className="h-full">
+              <CardContent>
+                <Tabs defaultValue="logs" className="">
+                  <TabsList>
+                    <TabsTrigger value="logs">System Log</TabsTrigger>
+                    <TabsTrigger value="chat">Messages</TabsTrigger>
+                  </TabsList>
+                  <TabsContent value="logs">
+                    {/* System Log Content */}
+                    <div className="grid grid-cols-1 overflow-y-auto space-y-3 mb-4 max-h-[calc(100vh-15rem)]">
+                      {systemLogs.map(msg => (
+                        <InfoPanel
+                          key={msg.id}
+                          title={msg.timestamp}
+                          content={msg.text}
+                          color='cyan'
+                        />
+                      ))}
+                    </div>
+                  </TabsContent>
+                  <TabsContent value="chat">
+                    {/* Chat Messages Content */}
+                    <div className="grid grid-cols-1 overflow-y-auto space-y-4 mb-4 max-h-[calc(100vh-15rem)]">
                       {chatMessages.map(msg => (
                         <div key={msg.id} className="relative group">
-                          <div className="absolute -inset-[1px] bg-gradient-to-r from-cyan-500/10 to-purple-500/10 rounded-sm blur-[1px] opacity-0 group-hover:opacity-100 transition-opacity"></div>
                           <div className="relative bg-zinc-900 p-3 text-sm">
                             <div className="flex items-start gap-3">
                               <img
@@ -219,10 +213,10 @@ export default function Home() {
                         </svg>
                       </button>
                     </form>
-                  </>
-                )}
-              </div>
-            </Panel>
+                  </TabsContent>
+                </Tabs>
+              </CardContent>
+            </Card>
           </div>
         </div>
       </div>

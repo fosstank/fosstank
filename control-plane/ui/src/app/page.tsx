@@ -6,6 +6,7 @@ import { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import InfoPanel from "@/components/info-panel";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import ChatMessage from "@/components/chat-message";
 
 const pb = new PocketBase('http://127.0.0.1:8090') as TypedPocketBase;
 
@@ -145,54 +146,39 @@ export default function Home() {
           </div>
 
           {/* Chat Column */}
-          <div className="w-96">
-            <Card className="h-full">
-              <CardContent>
-                <Tabs defaultValue="logs" className="">
-                  <TabsList>
-                    <TabsTrigger value="logs">System Log</TabsTrigger>
-                    <TabsTrigger value="chat">Messages</TabsTrigger>
-                  </TabsList>
-                  <TabsContent value="logs">
-                    {/* System Log Content */}
-                    <div className="grid grid-cols-1 overflow-y-auto space-y-3 mb-4 max-h-[calc(100vh-15rem)]">
-                      {systemLogs.map(msg => (
-                        <InfoPanel
-                          key={msg.id}
-                          title={msg.timestamp}
-                          content={msg.text}
-                          color='cyan'
-                        />
-                      ))}
-                    </div>
-                  </TabsContent>
-                  <TabsContent value="chat">
-                    {/* Chat Messages Content */}
-                    <div className="grid grid-cols-1 overflow-y-auto space-y-4 mb-4 max-h-[calc(100vh-15rem)]">
+          <Card className="h-full w-96">
+            <CardContent>
+              <Tabs defaultValue="logs" className="">
+                <TabsList>
+                  <TabsTrigger value="logs">System Log</TabsTrigger>
+                  <TabsTrigger value="chat">Messages</TabsTrigger>
+                </TabsList>
+                <TabsContent value="logs">
+                  {/* System Log Content */}
+                  <div className="grid grid-cols-1 overflow-y-auto space-y-3 mb-4 max-h-[calc(100vh-15rem)]">
+                    {systemLogs.map(msg => (
+                      <InfoPanel
+                        key={msg.id}
+                        title={msg.timestamp}
+                        content={msg.text}
+                        color='cyan'
+                      />
+                    ))}
+                  </div>
+                </TabsContent>
+                <TabsContent value="chat">
+                  {/* Chat Messages Content */}
+                  <div className="max-h-full">
+                    <div className="h-full flex flex-col justify-end overflow-y-autos space-y-1">
                       {chatMessages.map(msg => (
-                        <div key={msg.id} className="relative group">
-                          <div className="relative bg-zinc-900 p-3 text-sm">
-                            <div className="flex items-start gap-3">
-                              <img
-                                src={msg.user.avatar}
-                                alt={msg.user.name}
-                                className="w-8 h-8 rounded-full bg-zinc-800"
-                              />
-                              <div className="flex-1 min-w-0">
-                                <div className="flex items-center justify-between gap-2 mb-1">
-                                  <span className="font-medium text-zinc-300">{msg.user.name}</span>
-                                  <span className="font-mono text-xs text-zinc-500">{msg.timestamp}</span>
-                                </div>
-                                <p className="text-zinc-300 break-words">{msg.text}</p>
-                                {msg.cameraName && (
-                                  <div className="mt-2 text-xs text-cyan-500/70 font-mono">
-                                    Viewing: {msg.cameraName}
-                                  </div>
-                                )}
-                              </div>
-                            </div>
-                          </div>
-                        </div>
+                        <ChatMessage
+                          key={msg.id}
+                          id={msg.id}
+                          text={msg.text}
+                          timestamp={msg.timestamp}
+                          user={msg.user}
+                          cameraName={msg.cameraName}
+                        />
                       ))}
                     </div>
                     <form onSubmit={handleSendMessage} className="relative">
@@ -213,11 +199,11 @@ export default function Home() {
                         </svg>
                       </button>
                     </form>
-                  </TabsContent>
-                </Tabs>
-              </CardContent>
-            </Card>
-          </div>
+                  </div>
+                </TabsContent>
+              </Tabs>
+            </CardContent>
+          </Card>
         </div>
       </div>
     </div>

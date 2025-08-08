@@ -21,5 +21,5 @@ jobs:
       - name: Build and push
         uses: docker/bake-action@v6
         with:
-          source: control-plane/
+          source: ./control-plane
           push: true

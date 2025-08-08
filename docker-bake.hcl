@@ -4,8 +4,8 @@ group "default" {
 
 target "control-plane" {
     tags= ["ghcr.io/fosstank/control-plane:latest"]
-    context = "./control-plane"
+    context = "control-plane"
     contexts = {
-        ui = "./control-plane/ui"
+        ui = "control-plane/ui"
     }
 }

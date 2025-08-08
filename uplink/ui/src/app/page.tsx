@@ -1,17 +1,19 @@
 'use client';
 import HLSPlayer from "@/components/hls-player";
-import { Stream, TypedPocketBase } from "@/lib/pocketbase";
-import PocketBase from 'pocketbase';
-import { useEffect, useState } from "react";
+import { pb, Stream } from "@/lib/pocketbase";
+import { useContext, useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import InfoPanel from "@/components/info-panel";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import ChatMessage from "@/components/chat-message";
-
-const pb = new PocketBase('http://127.0.0.1:8090') as TypedPocketBase;
+import LoginPanel from "@/components/login";
+import { UserContext } from "./providers";
 
 export default function Home() {
   const [streams, setStreams] = useState<Stream[]>([]);
+  const [isLoginOpen, setIsLoginOpen] = useState(false);
+  const { user, setUser } = useContext(UserContext);
+
   useEffect(() => {
     pb.collection("streams").getFullList().then(streams => setStreams(streams))
   }, [])
@@ -75,6 +77,29 @@ export default function Home() {
             <span className="absolute inset-0 bg-gradient-to-r from-cyan-500/5 to-purple-500/5 mix-blend-overlay"></span>
             Fosstank
           </h1>
+          {user === null ? (
+            <button
+              onClick={() => setIsLoginOpen(true)}
+              className="absolute top-4 right-4 bg-cyan-500 hover:bg-cyan-400 text-zinc-900 font-bold py-2 px-4 rounded-sm transition-colors uppercase tracking-wider focus:outline-none focus:ring-2 focus:ring-cyan-500/50"
+            >
+              Login
+            </button>
+          ) : (
+            <div className="absolute top-4 right-4 flex items-center gap-4">
+              <span className="text-cyan-500 font-bold">
+                Welcome, {user.username}
+              </span>
+              <button
+                onClick={() => {
+                  pb.authStore.clear();
+                  setUser(null);
+                }}
+                className="bg-red-500 hover:bg-red-400 text-zinc-900 font-bold py-2 px-4 rounded-sm transition-colors uppercase tracking-wider focus:outline-none focus:ring-2 focus:ring-red-500/50"
+              >
+                Logout
+              </button>
+            </div>
+          )}
         </div>
         <div className="flex gap-6">
           {/* Left Column */}
@@ -206,6 +231,15 @@ export default function Home() {
           </Card>
         </div>
       </div>
+
+      {/* Login Panel */}
+      <LoginPanel
+        isOpen={isLoginOpen}
+        onClose={() => setIsLoginOpen(false)}
+        onLoginSuccess={() => {
+          setIsLoginOpen(false);
+        }}
+      />
     </div>
   );
 }

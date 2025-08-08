@@ -1,9 +1,10 @@
 import type { Metadata } from "next";
 import "./globals.css";
+import { Providers } from "./providers";
 
 export const metadata: Metadata = {
-  title: "Fosstank Control Plane",
-  description: "Control server for managing a fosstank server",
+  title: "Fosstank",
+  description: "24/7 live streaming reality show",
 };
 
 export default function RootLayout({
@@ -11,10 +12,13 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+
   return (
     <html lang="en">
       <body>
-        {children}
+        <Providers>
+          {children}
+        </Providers>
       </body>
     </html>
   );

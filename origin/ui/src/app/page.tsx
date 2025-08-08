@@ -73,7 +73,7 @@ export default function Home() {
         <div className="relative mb-8">
           <h1 className="text-5xl font-bold text-center text-cyan-500 uppercase tracking-wider py-4 border-y border-cyan-950 bg-zinc-950/80 [text-shadow:0_0_10px_theme(colors.cyan.500/40)]">
             <span className="absolute inset-0 bg-gradient-to-r from-cyan-500/5 to-purple-500/5 mix-blend-overlay"></span>
-            Fosstank Control Plane
+            Fosstank Origin Server
           </h1>
         </div>
         <div className="flex gap-6">

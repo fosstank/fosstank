@@ -19,7 +19,7 @@ import (
 	"github.com/pocketbase/pocketbase/plugins/migratecmd"
 	"github.com/pocketbase/pocketbase/tools/filesystem"
 
-	_ "control-plane/migrations"
+	_ "github.com/fosstank/fosstank/origin/migrations"
 )
 
 //go:embed ui/out/*

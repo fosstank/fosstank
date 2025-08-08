@@ -17,9 +17,9 @@ COPY --from=ui-build /build/out ./ui/out
 RUN go build .
 
 FROM alpine:3.22
+ARG TARGET
 WORKDIR /
 EXPOSE 8080
 
-RUN apk add ffmpeg
-COPY --from=go-build /build/control-plane .
-ENTRYPOINT ["/control-plane", "serve", "--http=0.0.0.0:8090"]
+COPY --from=go-build /build/uplink .
+ENTRYPOINT ["/uplink", "uplink", "--http=0.0.0.0:8090"]

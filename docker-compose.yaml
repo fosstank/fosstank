@@ -1,15 +1,25 @@
 services:
-  control-plane:
-    image: control-plane:latest
+  origin:
+    image: ghcr.io/fosstank/origin:latest
     build: .
     user: 1000:1000
-    container_name: control-plane
+    container_name: origin
     restart: unless-stopped
     ports:
       - 8090:8090
     volumes:
-      - ./streams:/streams
-      - ./pb_data:/pb_data
+      - ./origin/streams:/streams
+      - ./origin/pb_data:/pb_data
+  uplink:
+    image: ghcr.io/fosstank/uplink:latest
+    build: .
+    user: 1000:1000
+    container_name: uplink
+    restart: unless-stopped
+    ports:
+      - 8091:8090
+    volumes:
+      - ./uplink/pb_data:/pb_data
   # Minio is only used for testing locally, in production you'll use an actual S3 bucket.
   # Don't forget to make a "streams" bucket using the dashboard at localhost:9001.
   # Then enter the credentials in the pocketbase admin dashboard.

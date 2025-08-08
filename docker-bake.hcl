@@ -1,11 +1,19 @@
 group "default" {
-    targets = ["control-plane"]
+    targets = ["origin", "uplink"]
 }
 
-target "control-plane" {
-    tags= ["ghcr.io/fosstank/control-plane:latest"]
-    context = "control-plane"
+target "origin" {
+    tags= ["ghcr.io/fosstank/origin:latest"]
+    context = "origin"
     contexts = {
-        ui = "control-plane/ui"
+        ui = "origin/ui"
+    }
+}
+
+target "uplink" {
+    tags= ["ghcr.io/fosstank/uplink:latest"]
+    context = "uplink"
+    contexts = {
+        ui = "uplink/ui"
     }
 }

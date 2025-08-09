@@ -1,7 +1,7 @@
 'use client';
 import HLSPlayer from "@/components/hls-player";
 import { pb, Stream } from "@/lib/pocketbase";
-import { useContext, useEffect, useState } from "react";
+import { useContext, useEffect, useRef, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import InfoPanel from "@/components/info-panel";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -15,6 +15,7 @@ export default function Home() {
   const [streams, setStreams] = useState<Stream[]>([]);
   const [isLoginOpen, setIsLoginOpen] = useState(false);
   const { user, setUser } = useContext(UserContext);
+  const chatContainerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     pb.collection("streams").getFullList().then(streams => setStreams(streams))
@@ -49,13 +50,13 @@ export default function Home() {
     }
   ]);
 
-  const [inputMessage, setInputMessage] = useState("");
+  useEffect(() => {
+    if (chatContainerRef.current) {
+      chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight;
+    }
+  }, [chatMessages]);
 
-  // Simulated current user
-  const currentUser = {
-    name: "Test User",
-    avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=TestUser"
-  };
+  const [inputMessage, setInputMessage] = useState("");
 
   const handleSendMessage = (e: React.FormEvent) => {
     e.preventDefault();
@@ -65,15 +66,18 @@ export default function Home() {
       id: Date.now(),
       text: inputMessage,
       timestamp: new Date().toLocaleTimeString(),
-      user: currentUser,
+      user: {
+        name: user?.username || "FIXME: This shouldn't ever happen",
+        avatar: "avatar.jpg"
+      },
       cameraName: streams[0]?.name // For demo, we'll just use the first stream
     }]);
     setInputMessage("");
   };
 
   return (
-    <div className="min-h-screen bg-zinc-950 [background-image:repeating-linear-gradient(45deg,#18181b_25%,transparent_25%,transparent_75%,#18181b_75%,#18181b),repeating-linear-gradient(45deg,#18181b_25%,#09090b_25%,#09090b_75%,#18181b_75%,#18181b)] [background-position:0_0,10px_10px] [background-size:20px_20px] p-4">
-      <div className="flex flex-row items-center mb-4 border-cyan-950 bg-zinc-950/80 border-y-1">
+    <div className="h-screen flex flex-col gap-1 bg-zinc-950 [background-image:repeating-linear-gradient(45deg,#18181b_25%,transparent_25%,transparent_75%,#18181b_75%,#18181b),repeating-linear-gradient(45deg,#18181b_25%,#09090b_25%,#09090b_75%,#18181b_75%,#18181b)] [background-position:0_0,10px_10px] [background-size:20px_20px]">
+      <div className="flex flex-row items-center border-cyan-950 bg-zinc-950/80 border-y-1">
         <div className="flex-1"></div>
         <h1 className="text-5xl font-bold text-center text-cyan-500 uppercase [text-shadow:0_0_10px_theme(colors.cyan.500/40)]">
           Fosstank
@@ -93,7 +97,7 @@ export default function Home() {
                   <img
                     src={user.avatar || "avatar.jpg"}
                     alt={user.username}
-                    className="w-8 h-8 rounded-full mr-2"
+                    className="w-8 h-8 border-2 border-accent-foreground mr-2"
                   />
                   <span className="text-cyan-500 font-bold">
                     {user.username}
@@ -115,9 +119,9 @@ export default function Home() {
           )}
         </div>
       </div>
-      <div className="flex gap-6">
+      <div className="grid grid-cols-24 gap-1 h-full">
         {/* Left Column */}
-        <div className="w-80 space-y-6">
+        <div className="col-span-5 flex flex-col gap-1">
           {/* Announcements Panel */}
           <Card>
             <CardHeader>
@@ -167,7 +171,7 @@ export default function Home() {
         </div>
 
         {/* Main Content - Streams */}
-        <div className="flex-1">
+        <div className="col-span-14">
           <Card>
             <CardContent>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -185,40 +189,29 @@ export default function Home() {
         </div>
 
         {/* Chat Column */}
-        <Card className="h-full w-96">
-          <CardContent>
-            <Tabs defaultValue="logs" className="">
+        <Card className="col-span-5">
+          <CardContent className="h-full">
+            <Tabs defaultValue="chat" className="h-full">
               <TabsList>
-                <TabsTrigger value="logs">System Log</TabsTrigger>
                 <TabsTrigger value="chat">Messages</TabsTrigger>
+                <TabsTrigger value="logs">System Log</TabsTrigger>
               </TabsList>
-              <TabsContent value="logs">
-                {/* System Log Content */}
-                <div className="grid grid-cols-1 overflow-y-auto space-y-3 mb-4 max-h-[calc(100vh-15rem)]">
-                  {systemLogs.map(msg => (
-                    <InfoPanel
-                      key={msg.id}
-                      title={msg.timestamp}
-                      content={msg.text}
-                      color='cyan'
-                    />
-                  ))}
-                </div>
-              </TabsContent>
               <TabsContent value="chat">
                 {/* Chat Messages Content */}
-                <div className="max-h-full">
-                  <div className="h-full flex flex-col justify-end overflow-y-autos space-y-1">
-                    {chatMessages.map(msg => (
-                      <ChatMessage
-                        key={msg.id}
-                        id={msg.id}
-                        text={msg.text}
-                        timestamp={msg.timestamp}
-                        user={msg.user}
-                        cameraName={msg.cameraName}
-                      />
-                    ))}
+                <div className="h-full flex flex-col gap-1">
+                  <div className="h-full">
+                    <div className="flex flex-col h-0 min-h-full overflow-y-auto space-y-1" ref={chatContainerRef}>
+                      {chatMessages.map(msg => (
+                        <ChatMessage
+                          key={msg.id}
+                          id={msg.id}
+                          text={msg.text}
+                          timestamp={msg.timestamp}
+                          user={msg.user}
+                          cameraName={msg.cameraName}
+                        />
+                      ))}
+                    </div>
                   </div>
                   <form onSubmit={handleSendMessage} className="relative">
                     <input
@@ -238,6 +231,19 @@ export default function Home() {
                       </svg>
                     </button>
                   </form>
+                </div>
+              </TabsContent>
+              <TabsContent value="logs">
+                {/* System Log Content */}
+                <div className="grid grid-cols-1 overflow-y-auto space-y-3 mb-4 max-h-[calc(100vh-15rem)]">
+                  {systemLogs.map(msg => (
+                    <InfoPanel
+                      key={msg.id}
+                      title={msg.timestamp}
+                      content={msg.text}
+                      color='cyan'
+                    />
+                  ))}
                 </div>
               </TabsContent>
             </Tabs>

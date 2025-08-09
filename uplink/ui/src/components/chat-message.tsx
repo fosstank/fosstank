@@ -17,7 +17,7 @@ export default function ChatMessage({ text, timestamp, user, cameraName }: ChatM
                     <img
                         src={user.avatar}
                         alt={user.name}
-                        className="w-8 h-8 rounded-full bg-zinc-800"
+                        className="w-8 h-8 border-2 border-accent-foreground bg-zinc-800"
                     />
                     <div className="flex-1 min-w-0">
                         <div className="flex items-center justify-between gap-2 mb-1">

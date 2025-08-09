@@ -3,6 +3,7 @@ import { useContext, useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { pb, User } from "@/lib/pocketbase";
 import { UserContext } from "@/app/providers";
+import { toast } from "./toaster";
 
 interface LoginPanelProps {
     isOpen: boolean;
@@ -40,8 +41,7 @@ export default function LoginPanel({ isOpen, onClose, onLoginSuccess }: LoginPan
                     setIsLoading(false);
                 })
                 .catch((error) => {
-                    console.error('Login failed:', error);
-                    alert('Login failed. Please check your credentials and try again.');
+                    toast.error('Login failed. Please check your credentials and try again.');
                     setIsLoading(false);
                 });
             return;

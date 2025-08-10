@@ -19,17 +19,25 @@
 interface PanelProps {
     children: React.ReactNode;
     title?: string;
+    subtitle?: string;
     className?: string;
 }
 
-export default function Panel({ children, title, className = '' }: PanelProps) {
+export default function Panel({ children, title, subtitle, className = '' }: PanelProps) {
     return (
-        <div className={`bg-zinc-950/80 border border-zinc-800/50 shadow-inner shadow-black p-4 ${className}`}>
-            {title && (
-                <h2 className="text-cyan-500 font-bold mb-4 uppercase tracking-wider [text-shadow:0_0_10px_theme(colors.cyan.500/40)]">
-                    {title}
-                </h2>
-            )}
+        <div className={`${className} border border-neutral-600 rounded-sm overflow-clip shadow-[4px_4px_0px_rgb(0_0_0/0.5)]`}>
+            <div className="flex items-center gap-1 bg-blue-900 text-white px-1 border-b border-inherit">
+                {title && (
+                    <span className="font-semibold text-base">
+                        {title}
+                    </span>
+                )}
+                {subtitle && (
+                    <span className="text-yellow-300 font-extralight text-sm">
+                        {subtitle}
+                    </span>
+                )}
+            </div>
             {children}
         </div>
     );

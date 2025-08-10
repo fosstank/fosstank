@@ -26,6 +26,7 @@ import LoginPanel from "@/components/login";
 import { UserContext } from "./providers";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
 import { DropdownMenuTrigger } from "@radix-ui/react-dropdown-menu";
+import Panel from "@/components/panel";
 
 export default function Home() {
   const [streams, setStreams] = useState<Stream[]>([]);
@@ -92,9 +93,9 @@ export default function Home() {
   };
 
   return (
-    <div className="h-screen flex flex-col gap-1 bg-zinc-950">
-      <div className="flex flex-row items-center py-2 px-4 gap-1">
-        <h1 className="text-3xl font-bold text-center text-cyan-500 lowercase [text-shadow:0_0_10px_theme(colors.cyan.500/40)]">
+    <div className="h-[calc(100vh-(var(--spacing)*2))] flex flex-col gap-1">
+      <div className="flex flex-row items-center gap-1 h-12">
+        <h1 className="text-3xl font-bold text-center lowercase">
           Fosstank
         </h1>
         <img className="w-12 h-12" src="avatar.jpg"></img>
@@ -109,15 +110,15 @@ export default function Home() {
             </button>
           ) : (
             <DropdownMenu>
-              <DropdownMenuTrigger className="hover:bg-black">
-                <div className="flex items-center space-x-2 p-1 hover:ring ring-cyan-500">
+              <DropdownMenuTrigger>
+                <div className="flex items-center space-x-2 hover:ring ring-cyan-500">
                   <span className="text-cyan-500 font-bold">
                     {user.username}
                   </span>
                   <img
                     src={user.avatar || "avatar.jpg"}
                     alt={user.username}
-                    className="w-12 h-12 border-2 border-accent-foreground mr-2"
+                    className="w-12 h-12 border border-neutral-600 rounded-sm"
                   />
                 </div>
               </DropdownMenuTrigger>
@@ -136,11 +137,11 @@ export default function Home() {
           )}
         </div>
       </div>
-      <div className="grid grid-cols-24 gap-1 h-full">
+      <div className="grid grid-cols-12 gap-1 h-full">
         {/* Left Column */}
-        <div className="col-span-5 flex flex-col gap-1">
+        <div className="col-span-2 flex flex-col gap-1">
           {/* Announcements Panel */}
-          <Card>
+          {/* <Card>
             <CardHeader>
               <CardTitle>Announcements</CardTitle>
             </CardHeader>
@@ -150,10 +151,10 @@ export default function Home() {
                 <InfoPanel title="MAINTENANCE" content="Scheduled maintenance: July 20, 0200-0400" color='purple' borderLeft />
               </div>
             </CardContent>
-          </Card>
+          </Card> */}
 
           {/* Polls Panel */}
-          <Card>
+          {/* <Card>
             <CardHeader>
               <CardTitle>Active Polls</CardTitle>
             </CardHeader>
@@ -172,10 +173,10 @@ export default function Home() {
                 </div>
               </div>
             </CardContent>
-          </Card>
+          </Card> */}
 
           {/* Ads Panel */}
-          <Card>
+          {/* <Card>
             <CardHeader>
               <CardTitle>Sponsored</CardTitle>
             </CardHeader>
@@ -184,11 +185,11 @@ export default function Home() {
                 <InfoPanel title="FEATURED" content="Advanced Monitoring Solutions - Learn More" color='purple' clickable />
               </div>
             </CardContent>
-          </Card>
+          </Card> */}
         </div>
 
         {/* Main Content - Streams */}
-        <div className="col-span-14">
+        <div className="col-span-7">
           <Card>
             <CardContent>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -206,66 +207,40 @@ export default function Home() {
         </div>
 
         {/* Chat Column */}
-        <Card className="col-span-5">
-          <CardContent className="h-full">
-            <Tabs defaultValue="chat" className="h-full">
-              <TabsList>
-                <TabsTrigger value="chat">Messages</TabsTrigger>
-                <TabsTrigger value="logs">System Log</TabsTrigger>
-              </TabsList>
-              <TabsContent value="chat">
-                {/* Chat Messages Content */}
-                <div className="h-full flex flex-col gap-1">
-                  <div className="h-full">
-                    <div className="flex flex-col h-0 min-h-full overflow-y-auto space-y-1" ref={chatContainerRef}>
-                      {chatMessages.map(msg => (
-                        <ChatMessage
-                          key={msg.id}
-                          id={msg.id}
-                          text={msg.text}
-                          timestamp={msg.timestamp}
-                          user={msg.user}
-                          cameraName={msg.cameraName}
-                        />
-                      ))}
-                    </div>
-                  </div>
-                  <form onSubmit={handleSendMessage} className="relative">
-                    <input
-                      type="text"
-                      value={inputMessage}
-                      onChange={(e) => setInputMessage(e.target.value)}
-                      className="w-full bg-zinc-900 text-zinc-300 px-4 py-2 pr-12 rounded-sm border border-zinc-800 focus:border-cyan-500/50 focus:outline-none focus:ring-1 focus:ring-cyan-500/20 placeholder-zinc-600"
-                      placeholder="Type a message..."
-                    />
-                    <button
-                      type="submit"
-                      className="absolute right-2 top-1/2 -translate-y-1/2 text-cyan-500 hover:text-cyan-400 focus:outline-none disabled:opacity-50"
-                      disabled={!inputMessage.trim()}
-                    >
-                      <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 5l7 7-7 7M5 5l7 7-7 7" />
-                      </svg>
-                    </button>
-                  </form>
-                </div>
-              </TabsContent>
-              <TabsContent value="logs">
-                {/* System Log Content */}
-                <div className="grid grid-cols-1 overflow-y-auto space-y-3 mb-4 max-h-[calc(100vh-15rem)]">
-                  {systemLogs.map(msg => (
-                    <InfoPanel
-                      key={msg.id}
-                      title={msg.timestamp}
-                      content={msg.text}
-                      color='cyan'
-                    />
-                  ))}
-                </div>
-              </TabsContent>
-            </Tabs>
-          </CardContent>
-        </Card>
+        <Panel className="col-span-3 h-full" title="Chat" subtitle="[124 Online]">
+          {/* Chat Messages Content */}
+          <div className="h-full flex flex-col gap-1">
+            <div className="h-full">
+              <div className="flex flex-col h-0 min-h-full overflow-y-auto space-y-1" ref={chatContainerRef}>
+                {chatMessages.map(msg => (
+                  <ChatMessage
+                    key={msg.id}
+                    id={msg.id}
+                    text={msg.text}
+                    timestamp={msg.timestamp}
+                    user={msg.user}
+                    cameraName={msg.cameraName}
+                  />
+                ))}
+              </div>
+            </div>
+            <form onSubmit={handleSendMessage} className="bg-gray-900 border-t-1 h-16">
+              <input
+                type="text"
+                value={inputMessage}
+                onChange={(e) => setInputMessage(e.target.value)}
+                className="w-full rounded-sm  placeholder-zinc-600"
+                placeholder="Type a message..."
+              />
+              <button
+                type="submit"
+                className="hidden"
+                disabled={!inputMessage.trim()}
+              >
+              </button>
+            </form>
+          </div>
+        </Panel>
       </div>
 
       {/* Login Panel */}

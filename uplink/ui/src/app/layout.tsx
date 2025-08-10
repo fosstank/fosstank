@@ -18,6 +18,14 @@ import type { Metadata } from "next";
 import "./globals.css";
 import { Providers } from "./providers";
 import Toaster from "@/components/toaster";
+import { JetBrains_Mono } from "next/font/google";
+import { cn } from "@/lib/utils";
+
+const jetBrainsMono = JetBrains_Mono({
+  subsets: ["latin"],
+  variable: "--font-jetbrains-mono",
+  weight: ["200", "400", "500", "600", "700"],
+});
 
 export const metadata: Metadata = {
   title: "Fosstank",
@@ -31,8 +39,8 @@ export default function RootLayout({
 }>) {
 
   return (
-    <html lang="en">
-      <body>
+    <html lang="en" className={cn(jetBrainsMono.className, "text-shadow-[2px_2px_0px_rgb(0_0_0/0.75)]")}>
+      <body className="px-2 py-1 bg-zinc-950">
         <Providers>
           {children}
         </Providers>

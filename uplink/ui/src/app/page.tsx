@@ -92,32 +92,33 @@ export default function Home() {
   };
 
   return (
-    <div className="h-screen flex flex-col gap-1 bg-zinc-950 [background-image:repeating-linear-gradient(45deg,#18181b_25%,transparent_25%,transparent_75%,#18181b_75%,#18181b),repeating-linear-gradient(45deg,#18181b_25%,#09090b_25%,#09090b_75%,#18181b_75%,#18181b)] [background-position:0_0,10px_10px] [background-size:20px_20px]">
-      <div className="flex flex-row items-center border-cyan-950 bg-zinc-950/80 border-y-1">
-        <div className="flex-1"></div>
-        <h1 className="text-5xl font-bold text-center text-cyan-500 uppercase [text-shadow:0_0_10px_theme(colors.cyan.500/40)]">
+    <div className="h-screen flex flex-col gap-1 bg-zinc-950">
+      <div className="flex flex-row items-center py-2 px-4 gap-1">
+        <h1 className="text-3xl font-bold text-center text-cyan-500 lowercase [text-shadow:0_0_10px_theme(colors.cyan.500/40)]">
           Fosstank
         </h1>
-        <div className="flex-1 flex justify-end pr-4">
+        <img className="w-12 h-12" src="avatar.jpg"></img>
+        <div className="flex-1"></div>
+        <div className="flex-1 flex justify-end">
           {user === null ? (
             <button
               onClick={() => setIsLoginOpen(true)}
-              className="hover:bg-cyan-400 hover:text-cyan-900 text-cyan-400 font-bold p-4 transition-colors uppercase tracking-wider focus:outline-none focus:ring-2 focus:ring-cyan-500/50"
+              className="hover:bg-cyan-400 hover:text-cyan-900 text-cyan-400 font-bold transition-colors uppercase tracking-wider focus:outline-none focus:ring-2 focus:ring-cyan-500/50"
             >
               Login
             </button>
           ) : (
             <DropdownMenu>
-              <DropdownMenuTrigger className="p-4 hover:bg-black">
-                <div className="flex items-center space-x-2">
-                  <img
-                    src={user.avatar || "avatar.jpg"}
-                    alt={user.username}
-                    className="w-8 h-8 border-2 border-accent-foreground mr-2"
-                  />
+              <DropdownMenuTrigger className="hover:bg-black">
+                <div className="flex items-center space-x-2 p-1 hover:ring ring-cyan-500">
                   <span className="text-cyan-500 font-bold">
                     {user.username}
                   </span>
+                  <img
+                    src={user.avatar || "avatar.jpg"}
+                    alt={user.username}
+                    className="w-12 h-12 border-2 border-accent-foreground mr-2"
+                  />
                 </div>
               </DropdownMenuTrigger>
               <DropdownMenuContent>

@@ -209,41 +209,37 @@ export default function Home() {
         {/* Chat Column */}
         <Panel className="col-span-3 h-full" title="Chat" subtitle="[124 Online]">
           {/* Chat Messages Content */}
-          <div className="h-full flex flex-col gap-1">
-            <div className="h-full">
-              <div className="flex flex-col h-0 min-h-full overflow-y-auto space-y-1" ref={chatContainerRef}>
-                {chatMessages.map(msg => (
-                  <ChatMessage
-                    key={msg.id}
-                    id={msg.id}
-                    text={msg.text}
-                    timestamp={msg.timestamp}
-                    user={msg.user}
-                    cameraName={msg.cameraName}
-                  />
-                ))}
-              </div>
-            </div>
-            <div className="h-24 bg-zinc-800 border-neutral-600 border-t-1">
-              <div className="grid grid-cols-1">
-                <form onSubmit={handleSendMessage} className="h-full">
-                  <input
-                    type="text"
-                    value={inputMessage}
-                    onChange={(e) => setInputMessage(e.target.value)}
-                    className="w-full  placeholder-zinc-500 placeholder:text-shadow-[2px_2px_0px_rgb(0_0_0/0.75)]"
-                    placeholder="Type a message..."
-                  />
-                  <button
-                    type="submit"
-                    className="hidden"
-                    disabled={!inputMessage.trim()}
-                  >
-                  </button>
-                </form>
-              </div>
+          <div className="flex-1 flex flex-col gap-1">
+            <div className="flex flex-col h-0 min-h-full overflow-y-auto space-y-1" ref={chatContainerRef}>
+              {chatMessages.map(msg => (
+                <ChatMessage
+                  key={msg.id}
+                  id={msg.id}
+                  text={msg.text}
+                  timestamp={msg.timestamp}
+                  user={msg.user}
+                  cameraName={msg.cameraName}
+                />
+              ))}
             </div>
           </div>
+          <Panel.Footer className="flex items-center gap-1">
+            <form onSubmit={handleSendMessage} className="w-full">
+              <input
+                type="text"
+                value={inputMessage}
+                onChange={(e) => setInputMessage(e.target.value)}
+                className="w-full bg-transparent placeholder-zinc-500 placeholder:text-shadow-[2px_2px_0px_rgb(0_0_0/0.75)]"
+                placeholder="Type a message..."
+              />
+              <button
+                type="submit"
+                className="hidden"
+                disabled={!inputMessage.trim()}
+              >
+              </button>
+            </form>
+          </Panel.Footer>
         </Panel>
       </div>
 

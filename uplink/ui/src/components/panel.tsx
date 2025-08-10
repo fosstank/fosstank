@@ -23,10 +23,24 @@ interface PanelProps {
     className?: string;
 }
 
+interface FooterProps {
+    children: React.ReactNode;
+    className?: string;
+}
+
+function Footer({ children, className = '' }: FooterProps) {
+    return (
+        <div className={`${className} bg-zinc-800 border-t border-neutral-600`}>
+            {children}
+        </div>
+    );
+}
+
 export default function Panel({ children, title, subtitle, className = '' }: PanelProps) {
     return (
-        <div className={`${className} border border-neutral-600 rounded-sm overflow-clip shadow-[4px_4px_0px_rgb(0_0_0/0.5)]`}>
-            <div className="flex items-center gap-1 bg-blue-900 text-white px-1 border-b border-inherit">
+        <div className={`${className} flex flex-col border border-neutral-600 rounded-sm overflow-clip shadow-[4px_4px_0px_rgb(0_0_0/0.5)]`}>
+            {/* Header */}
+            <div className="flex items-center gap-1 bg-blue-900 px-1 border-b border-inherit">
                 {title && (
                     <span className="font-semibold text-base">
                         {title}
@@ -38,7 +52,12 @@ export default function Panel({ children, title, subtitle, className = '' }: Pan
                     </span>
                 )}
             </div>
-            {children}
+            {/* Content */}
+            <div className="flex-1 flex flex-col">
+                {children}
+            </div>
         </div>
     );
 }
+
+Panel.Footer = Footer;

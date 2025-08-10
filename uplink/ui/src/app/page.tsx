@@ -93,7 +93,7 @@ export default function Home() {
   };
 
   return (
-    <div className="h-[calc(100vh-(var(--spacing)*2))] flex flex-col gap-1">
+    <div className="h-[calc(100vh-(var(--spacing)*4))] flex flex-col gap-1">
       <div className="flex flex-row items-center gap-1 h-12">
         <h1 className="text-3xl font-bold text-center lowercase">
           Fosstank
@@ -224,21 +224,25 @@ export default function Home() {
                 ))}
               </div>
             </div>
-            <form onSubmit={handleSendMessage} className="bg-gray-900 border-t-1 h-16">
-              <input
-                type="text"
-                value={inputMessage}
-                onChange={(e) => setInputMessage(e.target.value)}
-                className="w-full rounded-sm  placeholder-zinc-600"
-                placeholder="Type a message..."
-              />
-              <button
-                type="submit"
-                className="hidden"
-                disabled={!inputMessage.trim()}
-              >
-              </button>
-            </form>
+            <div className="h-24 bg-zinc-800 border-neutral-600 border-t-1">
+              <div className="grid grid-cols-1">
+                <form onSubmit={handleSendMessage} className="h-full">
+                  <input
+                    type="text"
+                    value={inputMessage}
+                    onChange={(e) => setInputMessage(e.target.value)}
+                    className="w-full  placeholder-zinc-500 placeholder:text-shadow-[2px_2px_0px_rgb(0_0_0/0.75)]"
+                    placeholder="Type a message..."
+                  />
+                  <button
+                    type="submit"
+                    className="hidden"
+                    disabled={!inputMessage.trim()}
+                  >
+                  </button>
+                </form>
+              </div>
+            </div>
           </div>
         </Panel>
       </div>

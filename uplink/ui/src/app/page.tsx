@@ -27,6 +27,7 @@ import { UserContext } from "./providers";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
 import { DropdownMenuTrigger } from "@radix-ui/react-dropdown-menu";
 import Panel from "@/components/panel";
+import Button from "@/components/button";
 
 export default function Home() {
   const [streams, setStreams] = useState<Stream[]>([]);
@@ -189,7 +190,7 @@ export default function Home() {
         </div>
 
         {/* Main Content - Streams */}
-        <div className="col-span-7">
+        <div className="col-span-8">
           <Card>
             <CardContent>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -207,7 +208,7 @@ export default function Home() {
         </div>
 
         {/* Chat Column */}
-        <Panel className="col-span-3 h-full" title="Chat" subtitle="[124 Online]">
+        <Panel className="col-span-2 h-full" title="Chat" subtitle="[124 Online]">
           {/* Chat Messages Content */}
           <div className="flex-1 flex flex-col gap-1">
             <div className="flex flex-col h-0 min-h-full overflow-y-auto space-y-1" ref={chatContainerRef}>
@@ -223,13 +224,13 @@ export default function Home() {
               ))}
             </div>
           </div>
-          <Panel.Footer className="flex items-center gap-1">
+          <Panel.Footer className="flex flex-col gap-1">
             <form onSubmit={handleSendMessage} className="w-full">
               <input
                 type="text"
                 value={inputMessage}
                 onChange={(e) => setInputMessage(e.target.value)}
-                className="w-full bg-transparent placeholder-zinc-500 placeholder:text-shadow-[2px_2px_0px_rgb(0_0_0/0.75)]"
+                className="w-full p-1 bg-transparent placeholder-zinc-500 placeholder:text-shadow-[2px_2px_0px_rgb(0_0_0/0.75)]"
                 placeholder="Type a message..."
               />
               <button
@@ -239,6 +240,11 @@ export default function Home() {
               >
               </button>
             </form>
+            <div className="flex gap-1 p-2">
+              <Button className="px-1">TTS</Button>
+              <Button className="px-1">SFX</Button>
+              <Button className="px-1">FOSSTOY</Button>
+            </div>
           </Panel.Footer>
         </Panel>
       </div>

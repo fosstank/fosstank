@@ -39,7 +39,7 @@ export default function RootLayout({
 }>) {
 
   return (
-    <html lang="en" className={cn(jetBrainsMono.className, "text-shadow-[2px_2px_0px_rgb(0_0_0/0.75)] p-2")}>
+    <html lang="en" className={`${jetBrainsMono.className} text-shadow-[2px_2px_0px_rgb(0_0_0/0.75)] p-2`}>
       <body className="bg-zinc-950">
         <Providers>
           {children}

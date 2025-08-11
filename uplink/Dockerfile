@@ -22,4 +22,4 @@ WORKDIR /
 EXPOSE 8080
 
 COPY --from=go-build /build/uplink .
-ENTRYPOINT ["/uplink", "uplink", "--http=0.0.0.0:8090"]
+ENTRYPOINT ["/uplink", "serve", "--http=0.0.0.0:8090"]

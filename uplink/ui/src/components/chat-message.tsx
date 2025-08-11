@@ -17,7 +17,7 @@
 interface ChatMessageProps {
     id: number;
     text: string;
-    timestamp: string;
+    timestamp: Date;
     user: {
         name: string;
         avatar: string;
@@ -27,27 +27,24 @@ interface ChatMessageProps {
 
 export default function ChatMessage({ text, timestamp, user, cameraName }: ChatMessageProps) {
     return (
-        <div className="relative group">
-            <div className="relative bg-zinc-900 p-3 text-sm">
-                <div className="flex items-start gap-3">
-                    <img
-                        src={user.avatar}
-                        alt={user.name}
-                        className="w-8 h-8 border-2 border-accent-foreground bg-zinc-800"
-                    />
-                    <div className="flex-1 min-w-0">
-                        <div className="flex items-center justify-between gap-2 mb-1">
-                            <span className="font-medium text-muted-foreground">{user.name}</span>
-                            <span className="font-mono text-xs text-muted-foreground">{timestamp}</span>
-                        </div>
-                        <p className="text-muted-foreground break-words">{text}</p>
-                        {cameraName && (
-                            <div className="mt-2 text-xs text-muted-foreground font-mono">
-                                Viewing: {cameraName}
-                            </div>
-                        )}
-                    </div>
+        <div className="flex flex-col p-2">
+            <div className="flex gap-1">
+                <img
+                    src={user.avatar}
+                    alt={user.name}
+                    className="w-8 h-8 border border-neutral-600"
+                />
+                <div className="flex-1 text-sm/3">
+                    <span className="font-medium text-white pr-1">{user.name}</span>
+                    <span className="text-muted-foreground wrap-anywhere">{text}</span>
                 </div>
+            </div>
+            <div className="flex justify-end text-xs font-thin -tracking-[1.5px]">
+                {cameraName && (
+                    <span className="text-white pr-1 uppercase">{cameraName} @</span>
+                )}
+                {/* TODO: Format timestamp correctly. Should look like: 8/10/25, 9:00 PM */}
+                <span className="text-muted-foreground">{timestamp.toLocaleString()}</span>
             </div>
         </div>
     );

@@ -88,7 +88,7 @@ export default function Home() {
         name: user?.username || "FIXME: This shouldn't ever happen",
         avatar: "avatar.jpg"
       },
-      cameraName: streams[0]?.name // For demo, we'll just use the first stream
+      cameraName: "Kitchen" // For demo, we'll just use the first stream
     }]);
     setInputMessage("");
   };

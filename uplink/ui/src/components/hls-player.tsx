@@ -62,7 +62,7 @@ export default function HLSPlayer({ src, autoPlay = false, controls = true, titl
                 controls={controls}
             />
             <div className="absolute top-0 left-0 w-full flex px-1">
-                <span className="text-yellow-200">{title}</span>
+                <span className="text-yellow-200 uppercase">{title.replaceAll(" ", "_")}</span>
                 <div className="flex-1"></div>
                 <span>{subtitle}</span>
             </div>

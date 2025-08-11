@@ -21,11 +21,13 @@ import Hls from 'hls.js';
 
 interface HLSPlayerProps {
     src: string;
+    title: string;
+    subtitle: string;
     autoPlay?: boolean;
     controls?: boolean;
 }
 
-export default function HLSPlayer({ src, autoPlay = false, controls = true }: HLSPlayerProps) {
+export default function HLSPlayer({ src, autoPlay = false, controls = true, title, subtitle }: HLSPlayerProps) {
     const videoRef = useRef<HTMLVideoElement | null>(null);
 
     useEffect(() => {
@@ -52,20 +54,17 @@ export default function HLSPlayer({ src, autoPlay = false, controls = true }: HL
     }, [src]);
 
     return (
-        <div className="group relative">
-            <div className="absolute inset-0 bg-gradient-to-br from-cyan-500/5 to-purple-500/5 group-hover:from-cyan-500/10 group-hover:to-purple-500/10 transition-all duration-300"></div>
-            <div className="transform transition-all duration-300 group-hover:translate-x-1 group-hover:-translate-y-1">
-                <div className="relative">
-                    <div className="absolute -inset-[1px] bg-gradient-to-r from-cyan-500/25 to-purple-500/25 rounded-sm blur-[2px]"></div>
-                    <div className="aspect-video relative overflow-hidden border-2 border-zinc-700/50 shadow-inner shadow-black/50">
-                        <video
-                            ref={videoRef}
-                            className="w-full h-full object-cover"
-                            autoPlay={autoPlay}
-                            controls={controls}
-                        />
-                    </div>
-                </div>
+        <div className="relative">
+            <video
+                ref={videoRef}
+                className="relative w-full border border-neutral-600 rounded bg-neutral-600 shadow-[4px_4px_0px_rgb(0_0_0/0.5)]"
+                autoPlay={autoPlay}
+                controls={controls}
+            />
+            <div className="absolute top-0 left-0 w-full flex px-1">
+                <span className="text-yellow-200">{title}</span>
+                <div className="flex-1"></div>
+                <span>{subtitle}</span>
             </div>
         </div>
     );

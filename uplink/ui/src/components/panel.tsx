@@ -30,7 +30,7 @@ interface FooterProps {
 
 function Footer({ children, className = '' }: FooterProps) {
     return (
-        <div className={`${className} bg-zinc-800 border-t border-neutral-600`}>
+        <div className={`${className} bg-neutral-900 border-t border-neutral-600`}>
             {children}
         </div>
     );

@@ -49,22 +49,22 @@ export default function Home() {
     {
       id: 1,
       text: "Notice some turbulence in tank 2",
-      timestamp: "18:41:00",
+      timestamp: new Date(),
       user: {
         name: "Alice Chen",
         avatar: "avatar.jpg"
       },
-      cameraName: streams[0]?.name
+      cameraName: streams[0]?.title
     },
     {
       id: 2,
       text: "Checking pressure readings",
-      timestamp: "18:41:30",
+      timestamp: new Date(),
       user: {
         name: "Bob Smith",
         avatar: "avatar.jpg"
       },
-      cameraName: streams[1]?.name
+      cameraName: streams[1]?.title
     }
   ]);
 
@@ -83,7 +83,7 @@ export default function Home() {
     setChatMessages(prev => [...prev, {
       id: Date.now(),
       text: inputMessage,
-      timestamp: new Date().toLocaleTimeString(),
+      timestamp: new Date(),
       user: {
         name: user?.username || "FIXME: This shouldn't ever happen",
         avatar: "avatar.jpg"
@@ -190,21 +190,17 @@ export default function Home() {
         </div>
 
         {/* Main Content - Streams */}
-        <div className="col-span-8">
-          <Card>
-            <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {streams.map(stream => (
-                  <HLSPlayer
-                    key={stream.id}
-                    autoPlay
-                    controls={false}
-                    src={`/streams/${stream.id}/${stream.id}.m3u8`}
-                  />
-                ))}
-              </div>
-            </CardContent>
-          </Card>
+        <div className="col-span-8 h-full grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 auto-rows-min gap-4 border border-neutral-600 rounded p-1 bg-neutral-900">
+          {streams.map(stream => (
+            <HLSPlayer
+              key={stream.id}
+              autoPlay
+              controls={false}
+              src={`/streams/${stream.id}/${stream.id}.m3u8`}
+              title={stream.title}
+              subtitle="(194)"
+            />
+          ))}
         </div>
 
         {/* Chat Column */}

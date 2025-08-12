@@ -28,6 +28,8 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel,
 import { DropdownMenuTrigger } from "@radix-ui/react-dropdown-menu";
 import Panel from "@/components/panel";
 import Button from "@/components/button";
+import StreamPreview from "@/components/stream-preview";
+import { toast } from "@/components/toaster";
 
 export default function Home() {
   const [streams, setStreams] = useState<Stream[]>([]);
@@ -191,14 +193,15 @@ export default function Home() {
 
         {/* Main Content - Streams */}
         <div className="col-span-8 h-full grid grid-cols-2 lg:grid-cols-4 gap-2 border border-neutral-600 rounded p-1 bg-neutral-900">
-          {streams.map(stream => (
-            <HLSPlayer
+          {streams.map((stream, i) => (
+            <StreamPreview
               key={stream.id}
-              autoPlay
-              controls={false}
-              src={stream.url}
               title={stream.title}
               subtitle="(194)"
+              offline={i > 6}
+              stream={stream}
+              // TODO: Maximize stream on click
+              onClick={() => toast.info("Clicked stream: " + stream.title)}
             />
           ))}
         </div>

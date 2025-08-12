@@ -190,7 +190,7 @@ export default function Home() {
         </div>
 
         {/* Main Content - Streams */}
-        <div className="col-span-8 h-full grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 auto-rows-min gap-2 border border-neutral-600 rounded p-1 bg-neutral-900">
+        <div className="col-span-8 h-full grid grid-cols-2 lg:grid-cols-4 gap-2 border border-neutral-600 rounded p-1 bg-neutral-900">
           {streams.map(stream => (
             <HLSPlayer
               key={stream.id}

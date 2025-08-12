@@ -57,7 +57,7 @@ export default function HLSPlayer({ src, autoPlay = false, controls = true, titl
         <div className="relative">
             <video
                 ref={videoRef}
-                className="relative w-full border border-neutral-600 rounded bg-neutral-600 shadow-[4px_4px_0px_rgb(0_0_0/0.5)]"
+                className="relative w-full h-full border border-neutral-600 rounded bg-neutral-600 shadow-[4px_4px_0px_rgb(0_0_0/0.5)]"
                 autoPlay={autoPlay}
                 controls={controls}
             />

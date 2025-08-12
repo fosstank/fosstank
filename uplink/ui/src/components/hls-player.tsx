@@ -18,6 +18,7 @@
 
 import { useEffect, useRef } from 'react';
 import Hls from 'hls.js';
+import { toast } from './toaster';
 
 interface HLSPlayerProps {
     src: string;
@@ -32,6 +33,7 @@ export default function HLSPlayer({ src, autoPlay = false, controls = true, titl
 
     useEffect(() => {
         if (!videoRef.current) return;
+        if (src === "") return;
 
         if (Hls.isSupported()) {
             const hls = new Hls({
@@ -41,6 +43,7 @@ export default function HLSPlayer({ src, autoPlay = false, controls = true, titl
             hls.attachMedia(videoRef.current);
 
             hls.on(Hls.Events.ERROR, (event, data) => {
+                toast.error('HLS playback error: ' + data.reason);
                 console.error('HLS error:', data);
             });
 

@@ -196,7 +196,7 @@ export default function Home() {
               key={stream.id}
               autoPlay
               controls={false}
-              src={`/streams/${stream.id}/${stream.id}.m3u8`}
+              src={stream.url}
               title={stream.title}
               subtitle="(194)"
             />

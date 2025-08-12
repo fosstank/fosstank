@@ -23,6 +23,7 @@ export interface User extends RecordModel {
 export interface Stream {
     id: string
     title: string
+    url: string
 }
 
 interface TypedPocketBase extends PocketBase {

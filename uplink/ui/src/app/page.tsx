@@ -89,9 +89,9 @@ export default function Home() {
       timestamp: new Date(),
       user: {
         name: user?.username || "FIXME: This shouldn't ever happen",
-        avatar: "avatar.jpg"
+        avatar: "/avatar.jpg"
       },
-      cameraName: "Kitchen" // For demo, we'll just use the first stream
+      cameraName: selectedStreamIndex !== null ? streams[selectedStreamIndex]?.title : ""
     }]);
     setInputMessage("");
   };

@@ -18,7 +18,6 @@
 
 import { useEffect, useRef } from 'react';
 import Hls from 'hls.js';
-import { toast } from './toaster';
 import Panel from './panel';
 import { ArrowLeft, ArrowRight, SquareX } from 'lucide-react';
 
@@ -48,7 +47,6 @@ export default function HLSPlayer({ src, autoPlay = false, controls = true, titl
             hls.attachMedia(videoRef.current);
 
             hls.on(Hls.Events.ERROR, (event, data) => {
-                toast.error('HLS playback error: ' + data.reason);
                 console.error('HLS error:', data);
             });
 

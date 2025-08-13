@@ -32,4 +32,4 @@ interface TypedPocketBase extends PocketBase {
     collection(idOrName: 'users'): RecordService<User>
 }
 
-export const pb = new PocketBase('http://127.0.0.1:8090') as TypedPocketBase;
+export const pb = new PocketBase('http://127.0.0.1:8091') as TypedPocketBase;

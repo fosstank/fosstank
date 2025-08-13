@@ -16,7 +16,7 @@
 
 'use client';
 
-import React, { useState, useCallback, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import Toast from './toast';
 
 interface ToastData {

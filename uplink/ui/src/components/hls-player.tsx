@@ -20,7 +20,7 @@ import { useEffect, useRef } from 'react';
 import Hls from 'hls.js';
 import { toast } from './toaster';
 import Panel from './panel';
-import { ArrowLeft, ArrowRight, MoveLeft, MoveRight, SquareX } from 'lucide-react';
+import { ArrowLeft, ArrowRight, SquareX } from 'lucide-react';
 
 interface HLSPlayerProps {
     src: string;

@@ -200,7 +200,7 @@ export default function Home() {
               title={streams[selectedStreamIndex].title}
               subtitle="[ 194 ]"
               autoPlay={true}
-              controls={true}
+              controls={streams[selectedStreamIndex].url !== ""}
               onLeft={() => setSelectedStreamIndex((i) => i !== null ? ((i - 1) + streams.length) % streams.length : null)}
               onRight={() => setSelectedStreamIndex((i) => i !== null ? ((i + 1) + streams.length) % streams.length : null)}
               onClose={() => setSelectedStreamIndex(null)}

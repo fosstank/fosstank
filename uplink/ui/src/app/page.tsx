@@ -201,8 +201,8 @@ export default function Home() {
               subtitle="[ 194 ]"
               autoPlay={true}
               controls={true}
-              onLeft={() => setSelectedStreamIndex((i) => i !== null ? (i - 1) % streams.length : null)}
-              onRight={() => setSelectedStreamIndex((i) => i !== null ? (i + 1) % streams.length : null)}
+              onLeft={() => setSelectedStreamIndex((i) => i !== null ? ((i - 1) + streams.length) % streams.length : null)}
+              onRight={() => setSelectedStreamIndex((i) => i !== null ? ((i + 1) + streams.length) % streams.length : null)}
               onClose={() => setSelectedStreamIndex(null)}
             />
           ) : (

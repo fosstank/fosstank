@@ -49,7 +49,7 @@ export default function StreamPreview({ title, subtitle, stream, offline = false
             <img
                 ref={imgElement}
                 src={"/noise.gif"}
-                className="relative w-full h-full object-cover bg-neutral-600"
+                className="relative w-full h-full object-cover bg-neutral-600 hover:brightness-110"
             />
             <div className="absolute top-0 left-0 w-full flex px-1">
                 <span className="text-yellow-200 uppercase">{title.replaceAll(" ", "_")}</span>

@@ -18,25 +18,23 @@ interface ChatMessageProps {
     id: number;
     text: string;
     timestamp: Date;
-    user: {
-        name: string;
-        avatar: string;
-    };
+    username: string;
+    avatar: string;
     cameraName?: string;
 }
 
-export default function ChatMessage({ text, timestamp, user, cameraName }: ChatMessageProps) {
+export default function ChatMessage({ text, timestamp, username, avatar, cameraName }: ChatMessageProps) {
     return (
         <div className="flex flex-col p-2">
             <div className="flex gap-1">
                 <img
-                    src={user.avatar}
-                    alt={user.name}
+                    src={avatar || "/avatar.jpg"}
+                    alt="Profile Picture"
                     className="w-8 h-8 border border-neutral-600"
                 />
                 <div className="flex-1 text-sm/3">
-                    <span className="font-medium text-white pr-1">{user.name}</span>
-                    <span className="text-muted-foreground wrap-anywhere">{text}</span>
+                    <span className="font-medium text-yellow-200 pr-1">{username}</span>
+                    <span className="text-neutral-300 break-all">{text}</span>
                 </div>
             </div>
             <div className="flex justify-end text-xs font-thin -tracking-[1.5px]">

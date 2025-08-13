@@ -16,7 +16,7 @@
 
 'use client';
 import HLSPlayer from "@/components/hls-player";
-import { pb, Stream } from "@/lib/pocketbase";
+import { pb, Stream, User } from "@/lib/pocketbase";
 import { useContext, useEffect, useRef, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import InfoPanel from "@/components/info-panel";
@@ -48,25 +48,19 @@ export default function Home() {
     { id: 3, text: "Flow rate: 125 L/min", timestamp: "18:44:30", type: "system" },
   ]);
 
-  const [chatMessages, setChatMessages] = useState([
+  const [chatMessages, setChatMessages] = useState<{ id: number, text: string, timestamp: Date, user: User, cameraName: string }[]>([
     {
       id: 1,
       text: "Notice some turbulence in tank 2",
       timestamp: new Date(),
-      user: {
-        name: "Alice Chen",
-        avatar: "avatar.jpg"
-      },
+      user: { id: "", collectionId: "", collectionName: "", username: "Alice", avatar: "" },
       cameraName: streams[0]?.title
     },
     {
       id: 2,
       text: "Checking pressure readings",
       timestamp: new Date(),
-      user: {
-        name: "Bob Smith",
-        avatar: "avatar.jpg"
-      },
+      user: { id: "", collectionId: "", collectionName: "", username: "Bob", avatar: "" },
       cameraName: streams[1]?.title
     }
   ]);
@@ -82,15 +76,16 @@ export default function Home() {
   const handleSendMessage = (e: React.FormEvent) => {
     e.preventDefault();
     if (!inputMessage.trim()) return;
+    if (!user) {
+      toast.warning("You must be logged in to send messages");
+      return;
+    }
 
     setChatMessages(prev => [...prev, {
       id: Date.now(),
       text: inputMessage,
       timestamp: new Date(),
-      user: {
-        name: user?.username || "FIXME: This shouldn't ever happen",
-        avatar: "/avatar.jpg"
-      },
+      user: user,
       cameraName: selectedStreamIndex !== null ? streams[selectedStreamIndex]?.title : ""
     }]);
     setInputMessage("");
@@ -120,8 +115,8 @@ export default function Home() {
                     {user.username}
                   </span>
                   <img
-                    src={user.avatar || "/avatar.jpg"}
-                    alt={user.username}
+                    src={pb.files.getURL(user, user.avatar, { "thumb": "100x100" }) || "/avatar.jpg"}
+                    alt="Profile Picture"
                     className="w-12 h-12 border border-neutral-600 rounded-sm"
                   />
                 </div>
@@ -236,7 +231,8 @@ export default function Home() {
                     id={msg.id}
                     text={msg.text}
                     timestamp={msg.timestamp}
-                    user={msg.user}
+                    username={msg.user.username}
+                    avatar={msg.user.avatar ? pb.files.getURL(msg.user, msg.user.avatar, { "thumb": "100x100" }) : "/avatar.jpg"}
                     cameraName={msg.cameraName}
                   />
                 ))}

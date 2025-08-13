@@ -19,6 +19,8 @@
 import { useEffect, useRef } from 'react';
 import Hls from 'hls.js';
 import { toast } from './toaster';
+import Panel from './panel';
+import { ArrowLeft, ArrowRight, MoveLeft, MoveRight, SquareX } from 'lucide-react';
 
 interface HLSPlayerProps {
     src: string;
@@ -26,9 +28,12 @@ interface HLSPlayerProps {
     subtitle: string;
     autoPlay?: boolean;
     controls?: boolean;
+    onLeft?: () => void;
+    onRight?: () => void;
+    onClose?: () => void;
 }
 
-export default function HLSPlayer({ src, autoPlay = false, controls = true, title, subtitle }: HLSPlayerProps) {
+export default function HLSPlayer({ src, autoPlay = false, controls = true, title, subtitle, onLeft, onRight, onClose }: HLSPlayerProps) {
     const videoRef = useRef<HTMLVideoElement | null>(null);
 
     useEffect(() => {
@@ -57,18 +62,38 @@ export default function HLSPlayer({ src, autoPlay = false, controls = true, titl
     }, [src]);
 
     return (
-        <div className="relative">
-            <video
-                ref={videoRef}
-                className="relative w-full h-full border border-neutral-600 rounded bg-neutral-600 shadow-[4px_4px_0px_rgb(0_0_0/0.5)]"
-                autoPlay={autoPlay}
-                controls={controls}
-            />
-            <div className="absolute top-0 left-0 w-full flex px-1">
-                <span className="text-yellow-200 uppercase">{title.replaceAll(" ", "_")}</span>
+        <Panel className="h-full border border-neutral-600 rounded">
+            <Panel.Header color="gray" className="p-1">
+                <button
+                    onClick={onLeft}
+                    className="text-muted-foreground hover:text-white"
+                >
+                    <ArrowLeft />
+                </button>
+                <button
+                    onClick={onRight}
+                    className="text-muted-foreground hover:text-white"
+                >
+                    <ArrowRight />
+                </button>
+                <Panel.Header.Title text={title} className="pl-4" />
+                <Panel.Header.Subtitle text={subtitle} className="pl-4" />
                 <div className="flex-1"></div>
-                <span>{subtitle}</span>
-            </div>
-        </div>
+                <button
+                    onClick={onClose}
+                    className="text-muted-foreground hover:text-white"
+                >
+                    <SquareX />
+                </button>
+            </Panel.Header>
+            <Panel.Body>
+                <video
+                    ref={videoRef}
+                    className="w-full h-full border border-neutral-600 rounded bg-zinc-950 shadow-[4px_4px_0px_rgb(0_0_0/0.5)]"
+                    autoPlay={autoPlay}
+                    controls={controls}
+                />
+            </Panel.Body>
+        </Panel>
     );
 }

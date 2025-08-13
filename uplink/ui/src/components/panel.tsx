@@ -16,11 +16,50 @@
 
 'use client';
 
-interface PanelProps {
-    children: React.ReactNode;
-    title?: string;
-    subtitle?: string;
-    className?: string;
+import React from "react";
+
+type Color = 'blue' | 'red' | 'green' | 'yellow' | 'gray';
+const ColorMap: Record<Color, string> = {
+    blue: 'bg-blue-900',
+    red: 'bg-red-900',
+    green: 'bg-green-900',
+    yellow: 'bg-yellow-900',
+    gray: 'bg-neutral-900',
+};
+
+function Title({ text, className }: { text: string, className?: string }) {
+    return (
+        <span className={`${className} font-semibold text-base`}>
+            {text}
+        </span>
+    )
+}
+
+function Subtitle({ text, className }: { text: string, className?: string }) {
+    return (
+        <span className={`${className} text-yellow-300 font-extralight text-sm`}>
+            {text}
+        </span>
+    )
+}
+
+function Header({ className, children, color = 'blue' }: { className?: string, children: React.ReactNode; color?: Color }) {
+    return (
+        <div className={`${className} flex items-center gap-1 ${ColorMap[color]} border-b border-inherit`}>
+            {children}
+        </div>
+    );
+}
+
+Header.Title = Title;
+Header.Subtitle = Subtitle;
+
+function Body({ children }: { children: React.ReactNode }) {
+    return (
+        <div className="flex-1 flex flex-col">
+            {children}
+        </div>
+    );
 }
 
 interface FooterProps {
@@ -36,28 +75,18 @@ function Footer({ children, className = '' }: FooterProps) {
     );
 }
 
-export default function Panel({ children, title, subtitle, className = '' }: PanelProps) {
+interface PanelProps {
+    children: React.ReactNode;
+    className?: string;
+}
+export default function Panel({ children, className = '' }: PanelProps) {
     return (
         <div className={`${className} flex flex-col border border-neutral-600 rounded-sm overflow-clip shadow-[4px_4px_0px_rgb(0_0_0/0.5)]`}>
-            {/* Header */}
-            <div className="flex items-center gap-1 bg-blue-900 px-1 border-b border-inherit">
-                {title && (
-                    <span className="font-semibold text-base">
-                        {title}
-                    </span>
-                )}
-                {subtitle && (
-                    <span className="text-yellow-300 font-extralight text-sm">
-                        {subtitle}
-                    </span>
-                )}
-            </div>
-            {/* Content */}
-            <div className="flex-1 flex flex-col">
-                {children}
-            </div>
-        </div>
+            {children}
+        </div >
     );
 }
 
+Panel.Header = Header;
+Panel.Body = Body;
 Panel.Footer = Footer;

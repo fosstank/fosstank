@@ -34,6 +34,7 @@ import { toast } from "@/components/toaster";
 export default function Home() {
   const [streams, setStreams] = useState<Stream[]>([]);
   const [isLoginOpen, setIsLoginOpen] = useState(false);
+  const [selectedStreamIndex, setSelectedStreamIndex] = useState<number | null>(null);
   const { user, setUser } = useContext(UserContext);
   const chatContainerRef = useRef<HTMLDivElement>(null);
 
@@ -192,37 +193,56 @@ export default function Home() {
         </div>
 
         {/* Main Content - Streams */}
-        <div className="col-span-8 h-full grid grid-cols-2 lg:grid-cols-4 gap-2 border border-neutral-600 rounded p-1 bg-neutral-900">
-          {streams.map((stream, i) => (
-            <StreamPreview
-              key={stream.id}
-              title={stream.title}
-              subtitle="(194)"
-              offline={i > 6}
-              stream={stream}
-              // TODO: Maximize stream on click
-              onClick={() => toast.info("Clicked stream: " + stream.title)}
+        <div className="col-span-8 h-full">
+          {selectedStreamIndex !== null ? (
+            <HLSPlayer
+              src={streams[selectedStreamIndex].url}
+              title={streams[selectedStreamIndex].title}
+              subtitle="[ 194 ]"
+              autoPlay={true}
+              controls={true}
+              onLeft={() => setSelectedStreamIndex((i) => i !== null ? (i - 1) % streams.length : null)}
+              onRight={() => setSelectedStreamIndex((i) => i !== null ? (i + 1) % streams.length : null)}
+              onClose={() => setSelectedStreamIndex(null)}
             />
-          ))}
-        </div>
-
-        {/* Chat Column */}
-        <Panel className="col-span-2 h-full" title="Chat" subtitle="[124 Online]">
-          {/* Chat Messages Content */}
-          <div className="flex-1 flex flex-col gap-1">
-            <div className="flex flex-col h-0 min-h-full overflow-y-auto space-y-1" ref={chatContainerRef}>
-              {chatMessages.map(msg => (
-                <ChatMessage
-                  key={msg.id}
-                  id={msg.id}
-                  text={msg.text}
-                  timestamp={msg.timestamp}
-                  user={msg.user}
-                  cameraName={msg.cameraName}
+          ) : (
+            <div className="h-full grid grid-cols-2 lg:grid-cols-4 gap-2 border border-neutral-600 rounded p-1 bg-neutral-900">
+              {streams.map((stream, i) => (
+                <StreamPreview
+                  key={stream.id}
+                  title={stream.title}
+                  subtitle="(194)"
+                  offline={i > 6}
+                  stream={stream}
+                  onClick={() => setSelectedStreamIndex(i)}
                 />
               ))}
             </div>
-          </div>
+          )}
+        </div>
+
+        {/* Chat Column */}
+        <Panel className="col-span-2 h-full">
+          <Panel.Header color="blue" className="px-1">
+            <Panel.Header.Title text="Chat" />
+            <Panel.Header.Subtitle text="[124 Online]" />
+          </Panel.Header>
+          <Panel.Body>
+            <div className="flex-1 flex flex-col gap-1">
+              <div className="flex flex-col h-0 min-h-full overflow-y-auto space-y-1" ref={chatContainerRef}>
+                {chatMessages.map(msg => (
+                  <ChatMessage
+                    key={msg.id}
+                    id={msg.id}
+                    text={msg.text}
+                    timestamp={msg.timestamp}
+                    user={msg.user}
+                    cameraName={msg.cameraName}
+                  />
+                ))}
+              </div>
+            </div>
+          </Panel.Body>
           <Panel.Footer className="flex flex-col gap-1">
             <form onSubmit={handleSendMessage} className="w-full">
               <input

@@ -37,10 +37,10 @@ export default function StreamPreview({ title, subtitle, stream, offline = false
             onMouseEnter={() => {
                 // TODO: Play Sound Effect
                 if (imgElement.current) {
-                    imgElement.current.src = "noise-color.gif";
+                    imgElement.current.src = "/noise-color.gif";
                     setTimeout(() => {
                         if (imgElement.current) {
-                            imgElement.current.src = "noise.gif";
+                            imgElement.current.src = "/noise.gif";
                         }
                     }, 250);
                 }
@@ -48,7 +48,7 @@ export default function StreamPreview({ title, subtitle, stream, offline = false
         >
             <img
                 ref={imgElement}
-                src={"noise.gif"}
+                src={"/noise.gif"}
                 className="relative w-full h-full object-cover bg-neutral-600"
             />
             <div className="absolute top-0 left-0 w-full flex px-1">

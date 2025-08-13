@@ -102,7 +102,7 @@ export default function Home() {
         <h1 className="text-3xl font-bold text-center lowercase">
           Fosstank
         </h1>
-        <img className="w-12 h-12" src="avatar.jpg"></img>
+        <img className="w-12 h-12" src="/avatar.jpg"></img>
         <div className="flex-1"></div>
         <div className="flex-1 flex justify-end">
           {user === null ? (
@@ -120,7 +120,7 @@ export default function Home() {
                     {user.username}
                   </span>
                   <img
-                    src={user.avatar || "avatar.jpg"}
+                    src={user.avatar || "/avatar.jpg"}
                     alt={user.username}
                     className="w-12 h-12 border border-neutral-600 rounded-sm"
                   />

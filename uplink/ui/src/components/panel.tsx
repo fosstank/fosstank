@@ -54,9 +54,9 @@ function Header({ className, children, color = 'blue' }: { className?: string, c
 Header.Title = Title;
 Header.Subtitle = Subtitle;
 
-function Body({ children }: { children: React.ReactNode }) {
+function Body({ children, className }: { children: React.ReactNode, className?: string }) {
     return (
-        <div className="flex-1 flex flex-col">
+        <div className={`${className} flex-1 flex flex-col`}>
             {children}
         </div>
     );

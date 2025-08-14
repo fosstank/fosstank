@@ -18,18 +18,16 @@
 import HLSPlayer from "@/components/hls-player";
 import { pb, Stream, User } from "@/lib/pocketbase";
 import { useContext, useEffect, useRef, useState } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import InfoPanel from "@/components/info-panel";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import ChatMessage from "@/components/chat-message";
 import LoginPanel from "@/components/login";
 import { UserContext } from "./providers";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem } from "@/components/ui/dropdown-menu";
 import { DropdownMenuTrigger } from "@radix-ui/react-dropdown-menu";
 import Panel from "@/components/panel";
 import Button from "@/components/button";
 import StreamPreview from "@/components/stream-preview";
 import { toast } from "@/components/toaster";
+import PollPanel from "@/components/poll-panel";
 
 export default function Home() {
   const [streams, setStreams] = useState<Stream[]>([]);
@@ -139,52 +137,19 @@ export default function Home() {
       <div className="grid grid-cols-12 gap-1 h-full">
         {/* Left Column */}
         <div className="col-span-2 flex flex-col gap-1">
-          {/* Announcements Panel */}
-          {/* <Card>
-            <CardHeader>
-              <CardTitle>Announcements</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-3">
-                <InfoPanel title="SYSTEM UPDATE" content="New monitoring systems installed in Sector 7" color='cyan' borderLeft />
-                <InfoPanel title="MAINTENANCE" content="Scheduled maintenance: July 20, 0200-0400" color='purple' borderLeft />
-              </div>
-            </CardContent>
-          </Card> */}
-
-          {/* Polls Panel */}
-          {/* <Card>
-            <CardHeader>
-              <CardTitle>Active Polls</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                <div className="bg-zinc-900 p-3">
-                  <p className="text-zinc-300 text-sm mb-2">Preferred monitoring schedule?</p>
-                  <div className="space-y-2">
-                    <button className="w-full text-left text-xs bg-zinc-800 p-2 text-zinc-400 hover:bg-zinc-800/80 hover:text-cyan-500/90 transition-colors">
-                      □ 4-hour rotations
-                    </button>
-                    <button className="w-full text-left text-xs bg-zinc-800 p-2 text-zinc-400 hover:bg-zinc-800/80 hover:text-cyan-500/90 transition-colors">
-                      □ 6-hour rotations
-                    </button>
-                  </div>
-                </div>
-              </div>
-            </CardContent>
-          </Card> */}
-
-          {/* Ads Panel */}
-          {/* <Card>
-            <CardHeader>
-              <CardTitle>Sponsored</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-3">
-                <InfoPanel title="FEATURED" content="Advanced Monitoring Solutions - Learn More" color='purple' clickable />
-              </div>
-            </CardContent>
-          </Card> */}
+          <Panel>
+            <Panel.Header color="blue" className="px-1">
+              <Panel.Header.Title text="Happening Now" />
+            </Panel.Header>
+            <Panel.Body>
+              <p className="p-2">Jason exits the cell</p>
+            </Panel.Body>
+          </Panel>
+          <PollPanel
+            question="Who will exit the cell next?"
+            option1="Mike"
+            option2="Sean"
+          />
         </div>
 
         {/* Main Content - Streams */}

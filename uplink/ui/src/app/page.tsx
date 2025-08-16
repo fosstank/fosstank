@@ -34,6 +34,7 @@ export default function Home() {
   const [isLoginOpen, setIsLoginOpen] = useState(false);
   const [selectedStreamIndex, setSelectedStreamIndex] = useState<number | null>(null);
   const { user, setUser } = useContext(UserContext);
+  const [chatMessages, setChatMessages] = useState<Message[]>([]);
   const chatContainerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -49,8 +50,6 @@ export default function Home() {
     });
     return map;
   }, [streams]);
-
-  const [chatMessages, setChatMessages] = useState<Message[]>([]);
 
   useEffect(() => {
     const unsubscribe = pb.collection("messages").subscribe("*", (e) => {

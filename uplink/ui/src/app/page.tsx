@@ -28,6 +28,7 @@ import Button from "@/components/button";
 import StreamPreview from "@/components/stream-preview";
 import { toast } from "@/components/toaster";
 import PollPanel from "@/components/poll-panel";
+import { PiggyBank } from "lucide-react";
 
 export default function Home() {
   const [streams, setStreams] = useState<Stream[]>([]);
@@ -116,10 +117,14 @@ export default function Home() {
           ) : (
             <DropdownMenu>
               <DropdownMenuTrigger>
-                <div className="flex items-center space-x-2 hover:ring ring-cyan-500">
-                  <span className="text-cyan-500 font-bold">
-                    {user.username}
-                  </span>
+                <div className="flex space-x-2 hover:ring ring-cyan-500">
+                  <div className="flex flex-col">
+                    <span className="font-bold">{user.username}</span>
+                    <div className="flex items-end justify-end">
+                      <PiggyBank className="w-3 h-3"></PiggyBank>
+                      <span className="text-xl leading-[0.9]">0</span>
+                    </div>
+                  </div>
                   <img
                     src={pb.files.getURL(user, user.avatar, { "thumb": "100x100" }) || "/avatar.jpg"}
                     alt="Profile Picture"

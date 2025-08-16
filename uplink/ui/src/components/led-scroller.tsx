@@ -16,9 +16,10 @@ const LEDScroller: React.FC<LEDScrollerProps> = ({
     return (
         <div className={`overflow-hidden rounded-xs bg-black text-green-400 py-2 ${className}`}>
             <div
-                className="animate-scroll"
+                className="whitespace-nowrap w-max"
                 style={{
                     animation: `scroll ${duration}s steps(30) infinite`,
+                    willChange: 'transform'
                 }}
             >
                 {text}
@@ -27,15 +28,11 @@ const LEDScroller: React.FC<LEDScrollerProps> = ({
                 {`
                     @keyframes scroll {
                         0% {
-                            transform: translateX(105%);
+                            transform: translateX(100%);
                         }
                         100% {
-                            transform: translateX(-105%);
+                            transform: translateX(-100%);
                         }
-                    }
-                    .animate-scroll {
-                        animation: scroll ${duration}s steps(20) infinite;
-                        will-change: transform;
                     }
                 `}
             </style>

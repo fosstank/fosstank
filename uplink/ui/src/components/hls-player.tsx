@@ -87,7 +87,7 @@ export default function HLSPlayer({ src, autoPlay = false, controls = true, titl
             <Panel.Body>
                 <video
                     ref={videoRef}
-                    className="w-full h-full border border-neutral-600 rounded bg-zinc-950 shadow-[4px_4px_0px_rgb(0_0_0/0.5)]"
+                    className="w-full h-full"
                     autoPlay={autoPlay}
                     controls={controls}
                 />

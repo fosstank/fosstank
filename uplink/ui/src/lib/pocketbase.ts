@@ -26,10 +26,23 @@ export interface Stream {
     url: string
 }
 
+export interface Message {
+    id: string
+    user: string
+    stream: string
+    content: string
+    created: string
+    updated: string
+    expand: {
+        user: User
+    }
+}
+
 interface TypedPocketBase extends PocketBase {
     collection(idOrName: string): RecordService // default fallback for any other collection
     collection(idOrName: 'streams'): RecordService<Stream>
     collection(idOrName: 'users'): RecordService<User>
+    collection(idOrName: 'messages'): RecordService<Message>
 }
 
 export const pb = new PocketBase('http://127.0.0.1:8091') as TypedPocketBase;

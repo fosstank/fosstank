@@ -32,11 +32,19 @@ export function Providers({ children }: { children: React.ReactNode }) {
         if (pb.authStore.isValid) {
             setUser(pb.authStore.record as User);
         }
+
+        // Listen for auth store changes
+        const unsubscribe = pb.authStore.onChange((token, model) => {
+            console.log('Auth store changed:', { token, model });
+            setUser(model as User | null);
+        });
+
+        return unsubscribe;
     }, []);
 
     return (
-        <UserContext value={{ user: user, setUser: setUser }}>
+        <UserContext.Provider value={{ user: user, setUser: setUser }}>
             {children}
-        </UserContext>
+        </UserContext.Provider>
     );
 }

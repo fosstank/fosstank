@@ -16,8 +16,8 @@
 
 'use client';
 import HLSPlayer from "@/components/hls-player";
-import { pb, Stream, User } from "@/lib/pocketbase";
-import { useContext, useEffect, useRef, useState } from "react";
+import { Message, pb, Stream, User } from "@/lib/pocketbase";
+import { useContext, useEffect, useMemo, useRef, useState } from "react";
 import ChatMessage from "@/components/chat-message";
 import LoginPanel from "@/components/login";
 import { UserContext } from "./providers";
@@ -37,31 +37,69 @@ export default function Home() {
   const chatContainerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    pb.collection("streams").getFullList().then(streams => setStreams(streams))
+    pb.collection("streams").getFullList().then(streams => {
+      setStreams(streams);
+    });
   }, [])
 
-  const [systemLogs] = useState([
-    { id: 1, text: "Tank pressure nominal", timestamp: "18:42:05", type: "system" },
-    { id: 2, text: "Temperature within range", timestamp: "18:43:12", type: "system" },
-    { id: 3, text: "Flow rate: 125 L/min", timestamp: "18:44:30", type: "system" },
-  ]);
+  const streamMap = useMemo(() => {
+    const map = new Map<string, string>();
+    streams.forEach((stream) => {
+      map.set(stream.id, stream.title);
+    });
+    return map;
+  }, [streams]);
 
-  const [chatMessages, setChatMessages] = useState<{ id: number, text: string, timestamp: Date, user: User, cameraName: string }[]>([
+  const [chatMessages, setChatMessages] = useState<Message[]>([
     {
-      id: 1,
-      text: "Notice some turbulence in tank 2",
-      timestamp: new Date(),
-      user: { id: "", collectionId: "", collectionName: "", username: "Alice", avatar: "" },
-      cameraName: streams[0]?.title
+      id: "1",
+      content: "Notice some turbulence in tank 2",
+      created: new Date().toISOString(),
+      updated: new Date().toISOString(),
+      user: "",
+      stream: streams[0]?.title,
+      expand: {
+        user: {
+          collectionId: "users",
+          collectionName: "users",
+          id: "1",
+          username: "Jason",
+        }
+      },
     },
     {
-      id: 2,
-      text: "Checking pressure readings",
-      timestamp: new Date(),
-      user: { id: "", collectionId: "", collectionName: "", username: "Bob", avatar: "" },
-      cameraName: streams[1]?.title
+      id: "2",
+      content: "Checking pressure readings",
+      created: new Date().toISOString(),
+      updated: new Date().toISOString(),
+      user: "",
+      stream: streams[1]?.title,
+      expand: {
+        user: {
+          collectionId: "users",
+          collectionName: "users",
+          id: "2",
+          username: "Mike",
+        }
+      }
     }
   ]);
+
+  useEffect(() => {
+    const unsubscribe = pb.collection("messages").subscribe("*", (e) => {
+      if (e.action === "create") {
+        console.log(streamMap);
+        e.record.user = e.record.expand.user.username;
+        setChatMessages(prev => {
+          return [...prev, e.record];
+        });
+      }
+    }, { expand: "user" });
+
+    return () => {
+      unsubscribe?.then(unsub => unsub());
+    };
+  }, []);
 
   useEffect(() => {
     if (chatContainerRef.current) {
@@ -79,14 +117,18 @@ export default function Home() {
       return;
     }
 
-    setChatMessages(prev => [...prev, {
-      id: Date.now(),
-      text: inputMessage,
-      timestamp: new Date(),
-      user: user,
-      cameraName: selectedStreamIndex !== null ? streams[selectedStreamIndex]?.title : ""
-    }]);
-    setInputMessage("");
+    pb.collection("messages").create({
+      content: inputMessage,
+      user: user.id,
+      stream: selectedStreamIndex !== null ? streams[selectedStreamIndex].id : "",
+      created: new Date().toISOString(),
+      updated: new Date().toISOString()
+    }).then(() => {
+      setInputMessage("");
+    }).catch(err => {
+      console.error(err);
+      toast.error("Failed to send message: " + err.message);
+    });
   };
 
   return (
@@ -134,9 +176,9 @@ export default function Home() {
           )}
         </div>
       </div>
-      <div className="grid grid-cols-12 gap-1 h-full">
+      <div className="grid grid-cols-24 gap-1 h-full">
         {/* Left Column */}
-        <div className="col-span-2 flex flex-col gap-1">
+        <div className="col-span-3 flex flex-col gap-1">
           <Panel>
             <Panel.Header color="blue" className="px-1">
               <Panel.Header.Title text="Happening Now" />
@@ -153,7 +195,7 @@ export default function Home() {
         </div>
 
         {/* Main Content - Streams */}
-        <div className="col-span-8 h-full">
+        <div className="col-span-16 h-full">
           {selectedStreamIndex !== null ? (
             <HLSPlayer
               src={streams[selectedStreamIndex].url}
@@ -182,7 +224,7 @@ export default function Home() {
         </div>
 
         {/* Chat Column */}
-        <Panel className="col-span-2 h-full">
+        <Panel className="col-span-5 h-full">
           <Panel.Header color="blue" className="px-1">
             <Panel.Header.Title text="Chat" />
             <Panel.Header.Subtitle text="[124 Online]" />
@@ -193,12 +235,11 @@ export default function Home() {
                 {chatMessages.map(msg => (
                   <ChatMessage
                     key={msg.id}
-                    id={msg.id}
-                    text={msg.text}
-                    timestamp={msg.timestamp}
-                    username={msg.user.username}
-                    avatar={msg.user.avatar ? pb.files.getURL(msg.user, msg.user.avatar, { "thumb": "100x100" }) : "/avatar.jpg"}
-                    cameraName={msg.cameraName}
+                    content={msg.content}
+                    created={msg.created}
+                    username={msg.user}
+                    avatar={msg.expand.user.avatar ? pb.files.getURL(msg.expand.user, msg.expand.user.avatar, { "thumb": "100x100" }) : "/avatar.jpg"}
+                    stream={streamMap.get(msg.stream) || ""}
                   />
                 ))}
               </div>
@@ -212,6 +253,8 @@ export default function Home() {
                 onChange={(e) => setInputMessage(e.target.value)}
                 className="w-full p-1 bg-transparent placeholder-zinc-500 placeholder:text-shadow-[2px_2px_0px_rgb(0_0_0/0.75)]"
                 placeholder="Type a message..."
+                minLength={1}
+                maxLength={180}
               />
               <button
                 type="submit"

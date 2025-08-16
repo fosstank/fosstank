@@ -18,6 +18,7 @@
 
 import { createContext, Dispatch, SetStateAction, useEffect, useState } from "react";
 import { pb, User } from "@/lib/pocketbase";
+import { toast } from "@/components/toaster";
 
 export const UserContext = createContext<{ user: User | null, setUser: Dispatch<SetStateAction<User | null>> }>({
     user: null,
@@ -29,8 +30,15 @@ export function Providers({ children }: { children: React.ReactNode }) {
 
     // Initialize user state from PocketBase auth store
     useEffect(() => {
-        if (pb.authStore.isValid) {
-            setUser(pb.authStore.record as User);
+        if (pb.authStore.isValid && pb.authStore.record) {
+            pb.collection('users').getOne(pb.authStore.record.id).then((user) => {
+                setUser(user);
+            }).catch((err) => {
+                console.error("Failed to fetch user:", err);
+                toast.error("Failed to fetch user data. Please log in again.");
+                pb.authStore.clear();
+                setUser(null);
+            });
         }
 
         // Listen for auth store changes

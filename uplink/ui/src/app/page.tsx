@@ -122,7 +122,7 @@ export default function Home() {
                     <span className="font-bold">{user.username}</span>
                     <div className="flex items-end justify-end">
                       <PiggyBank className="w-3 h-3"></PiggyBank>
-                      <span className="text-xl leading-[0.9]">0</span>
+                      <span className="leading-[0.895] -tracking-[0.1em] font-light">{user.balance.toLocaleString()}</span>
                     </div>
                   </div>
                   <img

@@ -29,10 +29,16 @@ import StreamPreview from "@/components/stream-preview";
 import { toast } from "@/components/toaster";
 import PollPanel from "@/components/poll-panel";
 import { PiggyBank } from "lucide-react";
+import TTSPanel from "@/components/tts-panel";
+import SFXPanel from "@/components/sfx-panel";
+import FosstoyPanel from "@/components/fosstoy-panel";
 
 export default function Home() {
   const [streams, setStreams] = useState<Stream[]>([]);
   const [isLoginOpen, setIsLoginOpen] = useState(false);
+  const [ttsOpen, setTTSOpen] = useState(false);
+  const [sfxOpen, setSFXOpen] = useState(false);
+  const [fosstoysOpen, setFosstoysOpen] = useState(false);
   const [selectedStreamIndex, setSelectedStreamIndex] = useState<number | null>(null);
   const { user, setUser } = useContext(UserContext);
   const [chatMessages, setChatMessages] = useState<Message[]>([]);
@@ -235,9 +241,9 @@ export default function Home() {
               </button>
             </form>
             <div className="flex gap-1 p-2">
-              <Button className="px-1">TTS</Button>
-              <Button className="px-1">SFX</Button>
-              <Button className="px-1">FOSSTOY</Button>
+              <Button className="px-1" onClick={() => setTTSOpen(true)}>TTS</Button>
+              <Button className="px-1" onClick={() => setSFXOpen(true)}>SFX</Button>
+              <Button className="px-1" onClick={() => setFosstoysOpen(true)}>FOSSTOY</Button>
             </div>
           </Panel.Footer>
         </Panel>
@@ -251,6 +257,10 @@ export default function Home() {
           setIsLoginOpen(false);
         }}
       />
+
+      <TTSPanel isOpen={ttsOpen} onClose={() => setTTSOpen(false)}></TTSPanel>
+      <SFXPanel isOpen={sfxOpen} onClose={() => setSFXOpen(false)}></SFXPanel>
+      <FosstoyPanel isOpen={fosstoysOpen} onClose={() => setFosstoysOpen(false)}></FosstoyPanel>
     </div>
   );
 }

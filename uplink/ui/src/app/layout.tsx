@@ -19,7 +19,6 @@ import "./globals.css";
 import { Providers } from "./providers";
 import Toaster from "@/components/toaster";
 import { JetBrains_Mono } from "next/font/google";
-import { cn } from "@/lib/utils";
 
 const jetBrainsMono = JetBrains_Mono({
   subsets: ["latin"],

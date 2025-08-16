@@ -50,40 +50,7 @@ export default function Home() {
     return map;
   }, [streams]);
 
-  const [chatMessages, setChatMessages] = useState<Message[]>([
-    {
-      id: "1",
-      content: "Notice some turbulence in tank 2",
-      created: new Date().toISOString(),
-      updated: new Date().toISOString(),
-      user: "",
-      stream: streams[0]?.title,
-      expand: {
-        user: {
-          collectionId: "users",
-          collectionName: "users",
-          id: "1",
-          username: "Jason",
-        }
-      },
-    },
-    {
-      id: "2",
-      content: "Checking pressure readings",
-      created: new Date().toISOString(),
-      updated: new Date().toISOString(),
-      user: "",
-      stream: streams[1]?.title,
-      expand: {
-        user: {
-          collectionId: "users",
-          collectionName: "users",
-          id: "2",
-          username: "Mike",
-        }
-      }
-    }
-  ]);
+  const [chatMessages, setChatMessages] = useState<Message[]>([]);
 
   useEffect(() => {
     const unsubscribe = pb.collection("messages").subscribe("*", (e) => {

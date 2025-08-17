@@ -8,10 +8,13 @@ interface DropdownMenuProps {
     options: {
         row: React.ReactNode
     }[];
+    selected: number | null;
+    onSelect: (index: number) => void;
 }
 
-export default function DropdownMenu({ options }: DropdownMenuProps) {
-    const [selectedOption, setSelectedOption] = useState<number | null>(null);
+// FIXME: Dropdown will not scroll when contents extend off the screen.
+
+export default function DropdownMenu({ options, selected = null, onSelect }: DropdownMenuProps) {
     const [isOpen, setIsOpen] = useState(false);
 
     const handleKeyDown = (event: React.KeyboardEvent) => {
@@ -32,13 +35,13 @@ export default function DropdownMenu({ options }: DropdownMenuProps) {
                 aria-expanded={isOpen}
             >
                 <div className="flex-1" >
-                    {selectedOption !== null ? options[selectedOption].row : ""}
+                    {selected !== null ? options[selected].row : ""}
                 </div>
                 <ChevronDown className="h-5 w-5" aria-hidden="true" />
             </button>
 
             {isOpen && (
-                <div className="absolute w-full">
+                <div className="absolute w-full z-20">
                     <div className="fixed w-96 bg-neutral-800 rounded-b-xs overflow-clip" role="menu" aria-orientation="vertical" aria-labelledby="options-menu">
                         {options.map((option, index) => (
                             <button
@@ -46,8 +49,8 @@ export default function DropdownMenu({ options }: DropdownMenuProps) {
                                 className="w-full flex gap-2 px-4 py-2 hover:bg-neutral-700"
                                 role="menuitem"
                                 onClick={() => {
-                                    setSelectedOption(index);
                                     setIsOpen(false);
+                                    onSelect(index);
                                 }}
                             >
                                 <div className="flex-1">

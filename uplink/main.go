@@ -59,6 +59,18 @@ func main() {
 		return se.Next()
 	})
 
+	// Deduct user balance on TTS order creation
+	app.OnRecordCreateRequest("tts_orders").BindFunc(func(e *core.RecordRequestEvent) error {
+		option, err := app.FindRecordById(e.Collection.Name, e.Record.GetString("option"))
+		if err != nil {
+			return err
+		}
+
+		e.Auth.Set("balance", e.Auth.GetInt("balance")-option.GetInt("cost"))
+		app.Save(e.Auth)
+		return e.Next()
+	})
+
 	if err := app.Start(); err != nil {
 		log.Fatal(err)
 	}

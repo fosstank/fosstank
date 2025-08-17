@@ -2,13 +2,13 @@ import { X } from "lucide-react";
 import Panel from "./panel";
 
 
-interface FloatingPanelContainerProps {
+interface FloatingPanelProps {
     children: React.ReactNode;
     isOpen: boolean;
     onClose: () => void;
 }
 
-export default function FloatingPanel({ children, isOpen, onClose }: FloatingPanelContainerProps) {
+export default function FloatingPanel({ children, isOpen, onClose }: FloatingPanelProps) {
     if (!isOpen) return null;
 
     return (

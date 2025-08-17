@@ -32,6 +32,7 @@ import { PiggyBank } from "lucide-react";
 import TTSPanel from "@/components/tts-panel";
 import SFXPanel from "@/components/sfx-panel";
 import FosstoyPanel from "@/components/fosstoy-panel";
+import PiggyValue from "@/components/piggy-value";
 
 export default function Home() {
   const [streams, setStreams] = useState<Stream[]>([]);
@@ -47,6 +48,8 @@ export default function Home() {
   useEffect(() => {
     pb.collection("streams").getFullList().then(streams => {
       setStreams(streams);
+    }).catch(err => {
+      console.error("Failed to fetch streams:", err);
     });
   }, [])
 
@@ -126,10 +129,7 @@ export default function Home() {
                 <div className="flex space-x-2 hover:ring ring-cyan-500">
                   <div className="flex flex-col">
                     <span className="font-bold">{user.username}</span>
-                    <div className="flex items-end justify-end">
-                      <PiggyBank className="w-3 h-3"></PiggyBank>
-                      <span className="leading-[0.895] -tracking-[0.1em] font-light">{user.balance.toLocaleString()}</span>
-                    </div>
+                    <PiggyValue value={user.balance} />
                   </div>
                   <img
                     src={pb.files.getURL(user, user.avatar, { "thumb": "100x100" }) || "/avatar.jpg"}
@@ -241,9 +241,9 @@ export default function Home() {
               </button>
             </form>
             <div className="flex gap-1 p-2">
-              <Button className="px-1" onClick={() => setTTSOpen(true)}>TTS</Button>
-              <Button className="px-1" onClick={() => setSFXOpen(true)}>SFX</Button>
-              <Button className="px-1" onClick={() => setFosstoysOpen(true)}>FOSSTOY</Button>
+              <Button className="px-1" onClick={() => user !== null ? setTTSOpen(true) : setIsLoginOpen(true)}>TTS</Button>
+              <Button className="px-1" onClick={() => user !== null ? setSFXOpen(true) : setIsLoginOpen(true)}>SFX</Button>
+              <Button className="px-1" onClick={() => user !== null ? setFosstoysOpen(true) : setIsLoginOpen(true)}>FOSSTOY</Button>
             </div>
           </Panel.Footer>
         </Panel>

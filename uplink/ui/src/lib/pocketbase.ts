@@ -39,11 +39,26 @@ export interface Message {
     }
 }
 
+export interface TTSOption {
+    id: string;
+    title: string;
+    cost: number;
+}
+
+export interface TTSOrder {
+    id: string;
+    user: string;
+    option: string;
+    message: string;
+}
+
 interface TypedPocketBase extends PocketBase {
     collection(idOrName: string): RecordService // default fallback for any other collection
     collection(idOrName: 'streams'): RecordService<Stream>
     collection(idOrName: 'users'): RecordService<User>
     collection(idOrName: 'messages'): RecordService<Message>
+    collection(idOrName: 'tts_options'): RecordService<TTSOption>
+    collection(idOrName: 'tts_orders'): RecordService<TTSOrder>
 }
 
 export const pb = new PocketBase('http://127.0.0.1:8091') as TypedPocketBase;

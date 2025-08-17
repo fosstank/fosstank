@@ -16,7 +16,7 @@ interface ButtonProps {
 
 export default function Button({ children, className, color = 'yellow', onClick }: ButtonProps) {
     return (
-        <button onClick={onClick} className={`${className} text-shadow-[2px_2px_0px_rgb(0_0_0/0.75)] border border-neutral-600 ${ColorMap[color]} rounded transition-colors`}>
+        <button onClick={onClick} className={`${className} border border-neutral-600 ${ColorMap[color]} rounded transition-colors`}>
             {children}
         </button>
     );

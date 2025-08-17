@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import FloatingPanel from "./floating-panel";
 import { pb, TTSOption } from "@/lib/pocketbase";
 import PiggyValue from "./piggy-value";
+import DropdownMenu from "./dropdown-menu";
 
 interface TTSPanelProps {
     isOpen: boolean;
@@ -17,7 +18,7 @@ export default function TTSPanel({ isOpen, onClose }: TTSPanelProps) {
         }).catch((error) => {
             console.error("Failed to fetch TTS options:", error);
         })
-    })
+    }, [])
 
     return (
         <FloatingPanel isOpen={isOpen} onClose={onClose}>
@@ -30,6 +31,14 @@ export default function TTSPanel({ isOpen, onClose }: TTSPanelProps) {
                     </div>
                 ))}
             </div>
+            <DropdownMenu options={ttsOptions.map((o) => ({
+                row: (
+                    <div className="flex items-center">
+                        <span className="flex-1 text-left">{o.title}</span>
+                        <PiggyValue className="text-zinc-400" value={o.cost} />
+                    </div>
+                )
+            }))} />
         </FloatingPanel>
     );
 }

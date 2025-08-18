@@ -260,7 +260,7 @@ export default function Home() {
       />
 
       <TTSPanel streams={streams} selectedStreamIndex={selectedStreamIndex} isOpen={ttsOpen} onClose={() => setTTSOpen(false)}></TTSPanel>
-      <SFXPanel isOpen={sfxOpen} onClose={() => setSFXOpen(false)}></SFXPanel>
+      <SFXPanel streams={streams} selectedStreamIndex={selectedStreamIndex} isOpen={sfxOpen} onClose={() => setSFXOpen(false)}></SFXPanel>
       <FosstoyPanel isOpen={fosstoysOpen} onClose={() => setFosstoysOpen(false)}></FosstoyPanel>
     </div>
   );

@@ -52,6 +52,18 @@ export interface TTSOrder {
     message: string;
 }
 
+export interface SFXOption {
+    id: string;
+    title: string;
+    cost: number;
+}
+
+export interface SFXOrder {
+    id: string;
+    user: string;
+    option: string;
+}
+
 interface TypedPocketBase extends PocketBase {
     collection(idOrName: string): RecordService // default fallback for any other collection
     collection(idOrName: 'streams'): RecordService<Stream>
@@ -59,6 +71,8 @@ interface TypedPocketBase extends PocketBase {
     collection(idOrName: 'messages'): RecordService<Message>
     collection(idOrName: 'tts_options'): RecordService<TTSOption>
     collection(idOrName: 'tts_orders'): RecordService<TTSOrder>
+    collection(idOrName: 'sfx_options'): RecordService<SFXOption>
+    collection(idOrName: 'sfx_orders'): RecordService<SFXOrder>
 }
 
 export const pb = new PocketBase('http://127.0.0.1:8091') as TypedPocketBase;

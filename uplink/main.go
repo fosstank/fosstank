@@ -65,8 +65,13 @@ func main() {
 	})
 
 	// Deduct user balance on TTS order creation
-	app.OnRecordCreateRequest("tts_orders").BindFunc(func(e *core.RecordRequestEvent) error {
-		option, err := app.FindRecordById(e.Collection.Name, e.Record.GetString("option"))
+	optionsTableMap := map[string]string{
+		"tts_orders": "tts_options",
+		"sfx_orders": "sfx_options",
+	}
+	app.OnRecordCreateRequest("tts_orders", "sfx_orders").BindFunc(func(e *core.RecordRequestEvent) error {
+		e.App.Logger().Debug(e.Collection.Name)
+		option, err := app.FindRecordById(optionsTableMap[e.Collection.Name], e.Record.GetString("option"))
 		if err != nil {
 			return err
 		}

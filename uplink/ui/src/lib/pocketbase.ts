@@ -64,6 +64,24 @@ export interface SFXOrder {
     option: string;
 }
 
+export interface FosstoyOption {
+    id: string;
+    title: string;
+    description: string;
+    cost: number;
+    participant_count: number;
+    allow_duplicate_participants: boolean;
+    message: boolean;
+}
+
+export interface FosstoyOrder {
+    id: string;
+    user: string;
+    option: string;
+    participants: string[];
+    message: string;
+}
+
 interface TypedPocketBase extends PocketBase {
     collection(idOrName: string): RecordService // default fallback for any other collection
     collection(idOrName: 'streams'): RecordService<Stream>
@@ -73,6 +91,8 @@ interface TypedPocketBase extends PocketBase {
     collection(idOrName: 'tts_orders'): RecordService<TTSOrder>
     collection(idOrName: 'sfx_options'): RecordService<SFXOption>
     collection(idOrName: 'sfx_orders'): RecordService<SFXOrder>
+    collection(idOrName: 'fosstoy_options'): RecordService<FosstoyOption>
+    collection(idOrName: 'fosstoy_orders'): RecordService<FosstoyOrder>
 }
 
 export const pb = new PocketBase('http://127.0.0.1:8091') as TypedPocketBase;

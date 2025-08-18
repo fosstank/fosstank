@@ -244,7 +244,7 @@ export default function Home() {
             <div className="flex gap-1 p-2">
               <Button className="px-1" onClick={() => user !== null ? setTTSOpen(true) : setIsLoginOpen(true)}>TTS</Button>
               <Button className="px-1" onClick={() => user !== null ? setSFXOpen(true) : setIsLoginOpen(true)}>SFX</Button>
-              <Button className="px-1" onClick={() => user !== null ? setFosstoysOpen(true) : setIsLoginOpen(true)}>FOSSTOY</Button>
+              <Button className="px-1" onClick={() => user !== null ? setFosstoysOpen(true) : setIsLoginOpen(true)}>FOSSTOYS</Button>
             </div>
           </Panel.Footer>
         </Panel>

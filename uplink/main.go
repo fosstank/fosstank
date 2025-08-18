@@ -55,7 +55,12 @@ func main() {
 		if err != nil {
 			return err
 		}
-		se.Router.GET("/{path...}", apis.Static(public, false))
+		se.Router.GET("/{path...}", func(c *core.RequestEvent) error {
+			if strings.HasPrefix(c.Request.URL.Path, "/static/") {
+				c.Response.Header().Add("Cache-Control", "public, max-age=31536000, immutable")
+			}
+			return apis.Static(public, false)(c)
+		})
 		return se.Next()
 	})
 

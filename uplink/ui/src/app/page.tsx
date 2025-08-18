@@ -33,6 +33,7 @@ import TTSPanel from "@/components/tts-panel";
 import SFXPanel from "@/components/sfx-panel";
 import FosstoyPanel from "@/components/fosstoy-panel";
 import PiggyValue from "@/components/piggy-value";
+import { STATIC_ASSETS } from "@/lib/static-assets";
 
 export default function Home() {
   const [streams, setStreams] = useState<Stream[]>([]);
@@ -113,7 +114,7 @@ export default function Home() {
         <h1 className="text-3xl font-bold text-center lowercase">
           Fosstank
         </h1>
-        <img className="w-12 h-12" src="/avatar.jpg"></img>
+        <img className="w-12 h-12" src={STATIC_ASSETS["avatar"]}></img>
         <div className="flex-1"></div>
         <div className="flex-1 flex justify-end">
           {user === null ? (
@@ -132,7 +133,7 @@ export default function Home() {
                     <PiggyValue value={user.balance} />
                   </div>
                   <img
-                    src={pb.files.getURL(user, user.avatar, { "thumb": "100x100" }) || "/avatar.jpg"}
+                    src={pb.files.getURL(user, user.avatar, { "thumb": "100x100" }) || STATIC_ASSETS["avatar"]}
                     alt="Profile Picture"
                     className="w-12 h-12 border border-neutral-600 rounded-sm"
                   />
@@ -215,7 +216,7 @@ export default function Home() {
                     content={msg.content}
                     created={msg.created}
                     username={msg.user}
-                    avatar={msg.expand.user.avatar ? pb.files.getURL(msg.expand.user, msg.expand.user.avatar, { "thumb": "100x100" }) : "/avatar.jpg"}
+                    avatar={msg.expand.user.avatar ? pb.files.getURL(msg.expand.user, msg.expand.user.avatar, { "thumb": "100x100" }) : STATIC_ASSETS["avatar"]}
                     stream={streamMap.get(msg.stream) || ""}
                   />
                 ))}

@@ -14,6 +14,8 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+import { STATIC_ASSETS } from "@/lib/static-assets";
+
 interface ChatMessageProps {
     content: string;
     created: string;
@@ -27,7 +29,7 @@ export default function ChatMessage({ content, created, username, avatar, stream
         <div className="flex flex-col p-2">
             <div className="flex gap-1">
                 <img
-                    src={avatar || "/avatar.jpg"}
+                    src={avatar || STATIC_ASSETS["avatar"]}
                     alt="Profile Picture"
                     className="w-8 h-8 border border-neutral-600"
                 />

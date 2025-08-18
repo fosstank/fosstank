@@ -17,6 +17,7 @@
 'use client';
 
 import { Stream } from '@/lib/pocketbase';
+import { STATIC_ASSETS } from '@/lib/static-assets';
 import { useRef } from 'react';
 
 interface StreamPreviewProps {
@@ -37,10 +38,10 @@ export default function StreamPreview({ title, subtitle, stream, offline = false
             onMouseEnter={() => {
                 // TODO: Play Sound Effect
                 if (imgElement.current) {
-                    imgElement.current.src = "/noise-color.gif";
+                    imgElement.current.src = STATIC_ASSETS["noiseColor"];
                     setTimeout(() => {
                         if (imgElement.current) {
-                            imgElement.current.src = "/noise.gif";
+                            imgElement.current.src = STATIC_ASSETS["noise"];
                         }
                     }, 250);
                 }
@@ -48,7 +49,7 @@ export default function StreamPreview({ title, subtitle, stream, offline = false
         >
             <img
                 ref={imgElement}
-                src={"/noise.gif"}
+                src={STATIC_ASSETS["noise"]}
                 className="relative w-full h-full object-cover bg-neutral-600 hover:brightness-110"
             />
             <div className="absolute top-0 left-0 w-full flex px-1">

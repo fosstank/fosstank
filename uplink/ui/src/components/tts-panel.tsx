@@ -40,7 +40,7 @@ export default function TTSPanel({ streams, selectedStreamIndex = null, isOpen, 
         if (selectedStream === null) { toast.error("Stream is required."); return false; }
         if (selectedOption === null) { toast.error("TTS option is required."); return false; };
         if (user === null) { toast.error("Must be logged in to send TTS."); return false; }
-        if (user.balance < ttsOptions[selectedOption].cost) { toast.error("Balance too low."); return false; };
+        if (user.balance < ttsOptions[selectedOption].cost) { toast.error("Insufficient Balance."); return false; };
         return true;
     }
 
@@ -78,7 +78,7 @@ export default function TTSPanel({ streams, selectedStreamIndex = null, isOpen, 
                     }))}
                 />
                 <Button onClick={() => {
-                    if (user === null || selectedStream === null || selectedOption === null || !validate()) return;
+                    if (!validate() || user === null || selectedStream === null || selectedOption === null) return;
                     const stream = streams[selectedStream];
                     const option = ttsOptions[selectedOption];
                     pb.collection('tts_orders').create({

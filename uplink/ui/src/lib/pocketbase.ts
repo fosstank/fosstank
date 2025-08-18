@@ -82,6 +82,19 @@ export interface FosstoyOrder {
     message: string;
 }
 
+export interface Participant {
+    id: string;
+    name: string;
+    nickname: string;
+    image: string;
+    seasons: string[];
+}
+
+export interface Season {
+    id: string;
+    title: string;
+}
+
 interface TypedPocketBase extends PocketBase {
     collection(idOrName: string): RecordService // default fallback for any other collection
     collection(idOrName: 'streams'): RecordService<Stream>
@@ -93,6 +106,8 @@ interface TypedPocketBase extends PocketBase {
     collection(idOrName: 'sfx_orders'): RecordService<SFXOrder>
     collection(idOrName: 'fosstoy_options'): RecordService<FosstoyOption>
     collection(idOrName: 'fosstoy_orders'): RecordService<FosstoyOrder>
+    collection(idOrName: 'participants'): RecordService<Participant>
+    collection(idOrName: 'seasons'): RecordService<Season>
 }
 
 export const pb = new PocketBase('http://127.0.0.1:8091') as TypedPocketBase;

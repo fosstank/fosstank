@@ -12,8 +12,8 @@ export default function FloatingPanel({ children, isOpen, onClose }: FloatingPan
     if (!isOpen) return null;
 
     return (
-        <div className="fixed inset-0 backdrop-blur-xs bg-opacity-20 flex items-center justify-center">
-            <div className="relative">
+        <div onMouseDown={onClose} className="fixed inset-0 backdrop-blur-xs bg-opacity-20 flex items-center justify-center">
+            <div onMouseDown={e => e.stopPropagation()} className="relative">
                 <button
                     onClick={onClose}
                     className="absolute top-0 right-0 text-gray-500 hover:text-gray-700 p-1 hover:cursor-pointer"

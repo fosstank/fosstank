@@ -70,8 +70,7 @@ export interface FosstoyOption {
     description: string;
     cost: number;
     participant_count: number;
-    allow_duplicate_participants: boolean;
-    message: boolean;
+    message_required: boolean;
 }
 
 export interface FosstoyOrder {

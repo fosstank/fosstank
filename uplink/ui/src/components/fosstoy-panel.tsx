@@ -1,6 +1,6 @@
 import { useContext, useEffect, useState } from "react";
 import FloatingPanel from "./floating-panel";
-import { FosstoyOption, Participant, pb } from "@/lib/pocketbase";
+import { FosstoyOption, FosstoyOrder, Participant, pb } from "@/lib/pocketbase";
 import PiggyValue from "./piggy-value";
 import DropdownMenu from "./dropdown-menu";
 import Button from "./button";
@@ -16,7 +16,13 @@ export default function FosstoyPanel({ isOpen, onClose }: FosstoyPanelProps) {
     const [fosstoyOptions, setFosstoyOptions] = useState<FosstoyOption[]>([])
     const [selectedOption, setSelectedOption] = useState<number | null>(null);
     const [participants, setParticipants] = useState<Participant[]>([]);
+    const [selectedParticipants, setSelectedParticipants] = useState<number[]>([]);
+    const [message, setMessage] = useState<string>("");
     const { user, setUser } = useContext(UserContext);
+
+    // FIXME: These two useEfects load the options and participants in parallel.
+    // Unlike when an option is selected though, neither of these set the default selected participants,
+    // since we need both the option and participant lists to do that.
     useEffect(() => {
         pb.collection('fosstoy_options').getFullList(200).then((options) => {
             options.sort((a, b) => a.cost - b.cost);
@@ -43,25 +49,28 @@ export default function FosstoyPanel({ isOpen, onClose }: FosstoyPanelProps) {
         if (selectedOption === null) { toast.error("Fosstoy option is required."); return false; };
         if (user === null) { toast.error("Must be logged in to send fosstoys."); return false; }
         if (user.balance < fosstoyOptions[selectedOption].cost) { toast.error("Insufficient Balance."); return false; };
+        if (fosstoyOptions[selectedOption].participant_count !== selectedParticipants.length) {
+            toast.error(`Selected ${selectedParticipants.length} participants, ${fosstoyOptions[selectedOption].participant_count} required for ${fosstoyOptions[selectedOption].title}.`);
+            return false;
+        }
+        if (fosstoyOptions[selectedOption].message_required && message.length === 0) {
+            toast.error("Message is required.");
+            return false;
+        }
         return true;
+
     }
 
     return (
         <FloatingPanel isOpen={isOpen} onClose={onClose}>
             <div className="flex flex-col gap-2">
                 <h2 className="text-lg font-semibold mb-2">Fosstoys</h2>
-                {/* <DropdownMenu
-                    selected={selectedStream}
-                    onSelect={(index) => setSelectedStream(index)}
-                    options={streams.map((s) => ({
-                        row: (
-                            <span className="block text-left">{s.title}</span>
-                        )
-                    }))}
-                /> */}
                 <DropdownMenu
                     selected={selectedOption}
-                    onSelect={(index) => setSelectedOption(index)}
+                    onSelect={(index) => {
+                        setSelectedOption(index);
+                        setSelectedParticipants(participants.length > 0 ? Array(fosstoyOptions[index].participant_count).fill(0) : []);
+                    }}
                     options={fosstoyOptions.map((o) => ({
                         row: (
                             <div className="flex items-center">
@@ -75,8 +84,12 @@ export default function FosstoyPanel({ isOpen, onClose }: FosstoyPanelProps) {
                 {selectedOption !== null && Array.from({ length: fosstoyOptions[selectedOption].participant_count }).map((_, i) => (
                     <DropdownMenu
                         key={i}
-                        selected={participants.length > 0 ? 0 : null}
-                        onSelect={(index) => console.log("Selected participant index:", index)}
+                        selected={selectedParticipants[i] !== undefined ? selectedParticipants[i] : null}
+                        onSelect={(index) => {
+                            const newSelectedParticipants = [...selectedParticipants];
+                            newSelectedParticipants[i] = index;
+                            setSelectedParticipants(newSelectedParticipants);
+                        }}
                         options={participants.map((p) => ({
                             row: (
                                 <div className="flex items-center">
@@ -88,10 +101,10 @@ export default function FosstoyPanel({ isOpen, onClose }: FosstoyPanelProps) {
                     />
                 ))
                 }
-                {selectedOption !== null && fosstoyOptions[selectedOption].message && (
+                {selectedOption !== null && fosstoyOptions[selectedOption].message_required && (
                     <textarea
-                        // value={ttsMessage}
-                        // onChange={(e) => setTTSMessage(e.target.value)}
+                        value={message}
+                        onChange={(e) => setMessage(e.target.value)}
                         className="w-full h-48 p-1 bg-transparent placeholder-zinc-500 placeholder:text-shadow-[2px_2px_0px_rgb(0_0_0/0.75)]"
                         placeholder="Type a message..."
                         minLength={1}
@@ -104,6 +117,8 @@ export default function FosstoyPanel({ isOpen, onClose }: FosstoyPanelProps) {
                     pb.collection('fosstoy_orders').create({
                         user: user.id,
                         option: option.id,
+                        participants: option.participant_count > 0 ? selectedParticipants.map(i => participants[i].id) : [],
+                        ...option.message_required && { message: message },
                     }).then(() => {
                         setUser({ ...user, balance: user.balance - option.cost });
                         onClose();

@@ -41,6 +41,9 @@ export default function Home() {
   const [ttsOpen, setTTSOpen] = useState(false);
   const [sfxOpen, setSFXOpen] = useState(false);
   const [fosstoysOpen, setFosstoysOpen] = useState(false);
+  const [ttsEverOpened, setTTSEverOpened] = useState(false);
+  const [sfxEverOpened, setSFXEverOpened] = useState(false);
+  const [fosstoysEverOpened, setFosstoysEverOpened] = useState(false);
   const [selectedStreamIndex, setSelectedStreamIndex] = useState<number | null>(null);
   const { user, setUser } = useContext(UserContext);
   const [chatMessages, setChatMessages] = useState<Message[]>([]);
@@ -242,9 +245,9 @@ export default function Home() {
               </button>
             </form>
             <div className="flex gap-1 p-2">
-              <Button className="px-1" onClick={() => user !== null ? setTTSOpen(true) : setIsLoginOpen(true)}>TTS</Button>
-              <Button className="px-1" onClick={() => user !== null ? setSFXOpen(true) : setIsLoginOpen(true)}>SFX</Button>
-              <Button className="px-1" onClick={() => user !== null ? setFosstoysOpen(true) : setIsLoginOpen(true)}>FOSSTOYS</Button>
+              <Button className="px-1" onClick={() => user !== null ? (setTTSOpen(true), setTTSEverOpened(true)) : setIsLoginOpen(true)}>TTS</Button>
+              <Button className="px-1" onClick={() => user !== null ? (setSFXOpen(true), setSFXEverOpened(true)) : setIsLoginOpen(true)}>SFX</Button>
+              <Button className="px-1" onClick={() => user !== null ? (setFosstoysOpen(true), setFosstoysEverOpened(true)) : setIsLoginOpen(true)}>FOSSTOYS</Button>
             </div>
           </Panel.Footer>
         </Panel>
@@ -259,9 +262,9 @@ export default function Home() {
         }}
       />
 
-      <TTSPanel streams={streams} selectedStreamIndex={selectedStreamIndex} isOpen={ttsOpen} onClose={() => setTTSOpen(false)}></TTSPanel>
-      <SFXPanel streams={streams} selectedStreamIndex={selectedStreamIndex} isOpen={sfxOpen} onClose={() => setSFXOpen(false)}></SFXPanel>
-      <FosstoyPanel isOpen={fosstoysOpen} onClose={() => setFosstoysOpen(false)}></FosstoyPanel>
+      {ttsEverOpened && <TTSPanel streams={streams} selectedStreamIndex={selectedStreamIndex} isOpen={ttsOpen} onClose={() => setTTSOpen(false)}></TTSPanel>}
+      {sfxEverOpened && <SFXPanel streams={streams} selectedStreamIndex={selectedStreamIndex} isOpen={sfxOpen} onClose={() => setSFXOpen(false)}></SFXPanel>}
+      {fosstoysEverOpened && <FosstoyPanel isOpen={fosstoysOpen} onClose={() => setFosstoysOpen(false)}></FosstoyPanel>}
     </div>
   );
 }

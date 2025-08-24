@@ -121,6 +121,7 @@ export default function FosstoyPanel({ isOpen, onClose }: FosstoyPanelProps) {
                         ...option.message_required && { message: message },
                     }).then(() => {
                         setUser({ ...user, balance: user.balance - option.cost });
+                        setMessage("");
                         onClose();
                         toast.success("Fosstoy submitted!");
                     }).catch((error) => {

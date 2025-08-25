@@ -6,6 +6,7 @@ import DropdownMenu from "./dropdown-menu";
 import Button from "./button";
 import { toast } from "./toaster";
 import { UserContext } from "@/app/providers";
+import { ClientResponseError } from "pocketbase";
 
 interface SFXPanelProps {
     streams: Stream[];
@@ -18,14 +19,20 @@ export default function SFXPanel({ streams, selectedStreamIndex = null, isOpen, 
     const [sfxOptions, setSFXOptions] = useState<SFXOption[]>([])
     const [selectedStream, setSelectedStream] = useState(selectedStreamIndex || null);
     const [selectedOption, setSelectedOption] = useState<number | null>(null);
+    const [isLoading, setIsLoading] = useState(true);
     const { user, setUser } = useContext(UserContext);
     useEffect(() => {
+        setIsLoading(true);
         pb.collection('sfx_options').getFullList(200).then((options) => {
             options.sort((a, b) => a.cost - b.cost);
             setSFXOptions(options)
             setSelectedOption(options.length > 0 ? 0 : null);
-        }).catch((error) => {
+            setIsLoading(false);
+        }).catch((error: ClientResponseError) => {
+            if (error.isAbort) { return }
+            toast.error("Failed to fetch SFX options: " + error)
             console.error("Failed to fetch SFX options:", error);
+            onClose();
         })
     }, [])
 
@@ -42,7 +49,13 @@ export default function SFXPanel({ streams, selectedStreamIndex = null, isOpen, 
     }
 
     return (
-        <FloatingPanel isOpen={isOpen} onClose={onClose}>
+        <FloatingPanel
+            isOpen={isOpen}
+            onClose={onClose}
+            isLoading={isLoading}
+            loadingTitle="SFX"
+            loadingMessage="Loading sound effects..."
+        >
             <div className="flex flex-col gap-2">
                 <h2 className="text-lg font-semibold mb-2">Sound Effects</h2>
                 <DropdownMenu

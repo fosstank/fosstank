@@ -1,11 +1,12 @@
 import { useContext, useEffect, useState } from "react";
 import FloatingPanel from "./floating-panel";
-import { FosstoyOption, FosstoyOrder, Participant, pb } from "@/lib/pocketbase";
+import { FosstoyOption, FosstoyOrder, Participant, pb, Season } from "@/lib/pocketbase";
 import PiggyValue from "./piggy-value";
 import DropdownMenu from "./dropdown-menu";
 import Button from "./button";
 import { toast } from "./toaster";
 import { UserContext } from "@/app/providers";
+import { ClientResponseError } from "pocketbase";
 
 interface FosstoyPanelProps {
     isOpen: boolean;
@@ -18,31 +19,63 @@ export default function FosstoyPanel({ isOpen, onClose }: FosstoyPanelProps) {
     const [participants, setParticipants] = useState<Participant[]>([]);
     const [selectedParticipants, setSelectedParticipants] = useState<number[]>([]);
     const [message, setMessage] = useState<string>("");
+    const [isLoading, setIsLoading] = useState(false);
     const { user, setUser } = useContext(UserContext);
 
-    // FIXME: These two useEfects load the options and participants in parallel.
-    // Unlike when an option is selected though, neither of these set the default selected participants,
-    // since we need both the option and participant lists to do that.
     useEffect(() => {
-        pb.collection('fosstoy_options').getFullList(200).then((options) => {
-            options.sort((a, b) => a.cost - b.cost);
-            setFosstoyOptions(options)
-            setSelectedOption(options.length > 0 ? 0 : null);
-        }).catch((error) => {
-            console.error("Failed to fetch fosstoy options:", error);
-        })
-    }, [])
+        const loadOptionsAndParticipants = async () => {
+            setIsLoading(true);
 
-    useEffect(() => {
-        pb.collection('seasons').getFirstListItem("", { sort: "-created" }).then((season) => {
-            pb.collection('participants').getFullList({ filter: `seasons ~ "${season.id}"` }).then((participants) => {
-                setParticipants(participants);
-            }).catch((error) => {
-                console.error("Failed to fetch participants:", error);
-            })
-        }).catch((error) => {
-            console.error("Failed to fetch current season:", error);
-        })
+            let loadedOptions: FosstoyOption[] = [];
+            let loadedSeason: Season | null = null;
+            let loadedParticipants: Participant[] = [];
+
+
+            try {
+                // Load options and season in parallel
+                [loadedOptions, loadedSeason] = await Promise.all([
+                    pb.collection('fosstoy_options').getFullList(),
+                    pb.collection('seasons').getFirstListItem("", { sort: "-created" })
+                ]);
+                loadedOptions.sort((a, b) => a.cost - b.cost);
+            } catch (error: unknown) {
+                const clientError = error as ClientResponseError;
+                if (clientError.isAbort) { return }
+
+                toast.error("Loading data failed: " + clientError.message);
+                console.error("Loading data failed: ", clientError);
+                onClose();
+                return;
+            }
+
+            try {
+                loadedParticipants = await pb.collection('participants').getFullList({
+                    filter: `seasons ~ "${loadedSeason.id}"`
+                });
+            } catch (error: unknown) {
+                const clientError = error as ClientResponseError;
+                if (clientError.isAbort) { return }
+
+                toast.error("Failed to load participants: " + clientError.message);
+                console.error("Failed to fetch participants:", clientError);
+                onClose();
+                return;
+            }
+
+            setFosstoyOptions(loadedOptions);
+            setParticipants(loadedParticipants);
+
+            // Set defaults once both are loaded
+            if (loadedOptions.length > 0) {
+                setSelectedOption(0);
+                if (loadedParticipants.length > 0) {
+                    setSelectedParticipants(Array(loadedOptions[0].participant_count).fill(0));
+                }
+            }
+            setIsLoading(false);
+        };
+
+        loadOptionsAndParticipants();
     }, [])
 
     function validate() {
@@ -58,11 +91,20 @@ export default function FosstoyPanel({ isOpen, onClose }: FosstoyPanelProps) {
             return false;
         }
         return true;
+    }
 
+    if (!isOpen) {
+        return null;
     }
 
     return (
-        <FloatingPanel isOpen={isOpen} onClose={onClose}>
+        <FloatingPanel
+            isOpen={isOpen}
+            onClose={onClose}
+            isLoading={isLoading}
+            loadingTitle="Fosstoys"
+            loadingMessage="Loading fosstoys..."
+        >
             <div className="flex flex-col gap-2">
                 <h2 className="text-lg font-semibold mb-2">Fosstoys</h2>
                 <DropdownMenu
@@ -124,7 +166,7 @@ export default function FosstoyPanel({ isOpen, onClose }: FosstoyPanelProps) {
                         setMessage("");
                         onClose();
                         toast.success("Fosstoy submitted!");
-                    }).catch((error) => {
+                    }).catch((error: ClientResponseError) => {
                         toast.error("Failed to submit Fosstoy: " + error.message);
                         console.error("Failed to submit Fosstoy:", error);
                     })

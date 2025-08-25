@@ -94,6 +94,15 @@ export interface Season {
     title: string;
 }
 
+export interface Announcement {
+    id: string;
+    title: string;
+    message: string;
+    published: boolean;
+    created: string;
+    updated: string;
+}
+
 interface TypedPocketBase extends PocketBase {
     collection(idOrName: string): RecordService // default fallback for any other collection
     collection(idOrName: 'streams'): RecordService<Stream>
@@ -107,6 +116,7 @@ interface TypedPocketBase extends PocketBase {
     collection(idOrName: 'fosstoy_orders'): RecordService<FosstoyOrder>
     collection(idOrName: 'participants'): RecordService<Participant>
     collection(idOrName: 'seasons'): RecordService<Season>
+    collection(idOrName: 'announcements'): RecordService<Announcement>
 }
 
 export const pb = new PocketBase('http://127.0.0.1:8091') as TypedPocketBase;

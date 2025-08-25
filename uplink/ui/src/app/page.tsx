@@ -16,7 +16,7 @@
 
 'use client';
 import HLSPlayer from "@/components/hls-player";
-import { Message, pb, Stream, User } from "@/lib/pocketbase";
+import { Announcement, Message, pb, Stream } from "@/lib/pocketbase";
 import { useContext, useEffect, useMemo, useRef, useState } from "react";
 import ChatMessage from "@/components/chat-message";
 import LoginPanel from "@/components/login";
@@ -28,12 +28,12 @@ import Button from "@/components/button";
 import StreamPreview from "@/components/stream-preview";
 import { toast } from "@/components/toaster";
 import PollPanel from "@/components/poll-panel";
-import { PiggyBank } from "lucide-react";
 import TTSPanel from "@/components/tts-panel";
 import SFXPanel from "@/components/sfx-panel";
 import FosstoyPanel from "@/components/fosstoy-panel";
 import PiggyValue from "@/components/piggy-value";
 import { STATIC_ASSETS } from "@/lib/static-assets";
+import { ClientResponseError } from "pocketbase";
 
 export default function Home() {
   const [streams, setStreams] = useState<Stream[]>([]);
@@ -47,6 +47,7 @@ export default function Home() {
   const [selectedStreamIndex, setSelectedStreamIndex] = useState<number | null>(null);
   const { user, setUser } = useContext(UserContext);
   const [chatMessages, setChatMessages] = useState<Message[]>([]);
+  const [announcements, setAnnouncements] = useState<Announcement[]>([]);
   const chatContainerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -65,10 +66,42 @@ export default function Home() {
     return map;
   }, [streams]);
 
+  // TODO: I have the announcements capped at 3 right now, but maybe it's worth
+  // setting the overflow to scroll and fetching page by page.
+  useEffect(() => {
+    pb.collection("announcements").getList(1, 3, { sort: "-created" }).then(announcements => {
+      setAnnouncements(announcements.items);
+    }).catch((error: ClientResponseError) => {
+      toast.error("Failed to fetch announcements: " + error.message);
+      console.error("Failed to fetch announcements:", error);
+    });
+  }, [])
+
+  useEffect(() => {
+    const unsubscribe = pb.collection("announcements").subscribe("*", (e) => {
+      if (e.action === "create") {
+        setAnnouncements(prev => {
+          return [e.record, ...prev].slice(0, 3);
+        });
+      } else if (e.action === "update") {
+        setAnnouncements(prev => {
+          return prev.map(a => a.id === e.record.id ? e.record : a);
+        });
+      } else if (e.action === "delete") {
+        setAnnouncements(prev => {
+          return prev.filter(a => a.id !== e.record.id);
+        });
+      }
+    });
+
+    return () => {
+      unsubscribe?.then(unsub => unsub());
+    };
+  }, [])
+
   useEffect(() => {
     const unsubscribe = pb.collection("messages").subscribe("*", (e) => {
       if (e.action === "create") {
-        console.log(streamMap);
         e.record.user = e.record.expand.user.username;
         setChatMessages(prev => {
           return [...prev, e.record];
@@ -159,13 +192,33 @@ export default function Home() {
       </div>
       <div className="grid grid-cols-24 gap-1 h-full">
         {/* Left Column */}
-        <div className="col-span-3 flex flex-col gap-1">
+        <div className="col-span-3 flex flex-col gap-1 max-h-screen">
           <Panel>
             <Panel.Header color="blue" className="px-1">
-              <Panel.Header.Title text="Happening Now" />
+              <Panel.Header.Title text="Announcements" />
             </Panel.Header>
             <Panel.Body>
-              <p className="p-2">Jason exits the cell</p>
+              <div className=" flex flex-col gap-2 overflow-y-auto">
+                {announcements.length > 0 ? (
+                  announcements.map((announcement, index) => (
+                    <>
+                      <div key={announcement.id} className={`p-2 ${index === 0 ? '' : index === 1 ? 'brightness-90' : 'brightness-75'}`}>
+                        <h3 className="font-bold mb-1 text-cyan-300">{announcement.title}</h3>
+                        <p className="text-sm">{announcement.message}</p>
+                        <div className="flex justify-end text-xs font-thin -tracking-[1.5px]">
+                          {/* TODO: Format timestamp correctly. Should look like: 8/10/25, 9:00 PM */}
+                          <span className="text-muted-foreground">{announcement.created}</span>
+                        </div>
+                      </div>
+                      <hr className="h-0.5 bg-neutral-950"></hr>
+                    </>
+                  ))
+                ) : (
+                  <div className="text-center text-gray-400 text-sm p-4">
+                    All quiet in the tank...
+                  </div>
+                )}
+              </div>
             </Panel.Body>
           </Panel>
           <PollPanel

@@ -64,20 +64,104 @@ func main() {
 		return se.Next()
 	})
 
-	// Deduct user balance on TTS order creation
-	optionsTableMap := map[string]string{
-		"tts_orders": "tts_options",
-		"sfx_orders": "sfx_options",
-	}
-	app.OnRecordCreateRequest("tts_orders", "sfx_orders").BindFunc(func(e *core.RecordRequestEvent) error {
-		e.App.Logger().Debug(e.Collection.Name)
-		option, err := app.FindRecordById(optionsTableMap[e.Collection.Name], e.Record.GetString("option"))
+	// Deduct user balance on TTS/SFX/Fosstoy order creation
+	app.OnRecordCreateRequest("tts_orders", "sfx_orders", "fosstoy_orders").BindFunc(func(e *core.RecordRequestEvent) error {
+		errs := app.ExpandRecord(e.Record, []string{"option"}, nil)
+		if len(errs) > 0 {
+			return apis.NewBadRequestError("Failed to expand option relation", errs)
+		}
+		option := e.Record.ExpandedOne("option")
+
+		balance := e.Auth.GetInt("balance")
+		cost := option.GetInt("cost")
+		if balance < cost {
+			return apis.NewBadRequestError("Insufficient balance", nil)
+		}
+
+		// The user balance field has a min of 0, so this will error if they don't have enough.
+		// We've already checked their balance above anyway though.
+		e.Auth.Set("balance", balance-cost)
+		err := app.Save(e.Auth)
+		if err != nil {
+			return err
+		}
+		return e.Next()
+	})
+
+	// Make sure the poll options and votes are in the correct json structure
+	app.OnRecordValidate("polls").BindFunc(func(e *core.RecordEvent) error {
+		// Validate options field is an array of strings
+		options := []string{}
+		err := e.Record.UnmarshalJSONField("options", &options)
+		if err != nil {
+			return apis.NewBadRequestError("Poll options must be an array of strings", err)
+		}
+
+		if e.Record.GetString("votes") == "null" {
+			// Initialize votes to an array of zeros with the same length as options
+			e.Record.Set("votes", make([]int, len(options)))
+		} else {
+			// Ensure votes length matches options length
+			votes := []int{}
+			err = e.Record.UnmarshalJSONField("votes", &votes)
+			if err != nil || len(votes) != len(options) {
+				return apis.NewBadRequestError("Poll votes must be an array of integers with the same length as options", err)
+			}
+		}
+
+		return e.Next()
+	})
+
+	// Handle updating the poll vote totals and deducting user balance when a vote is created
+	app.OnRecordCreateRequest("poll_votes").BindFunc(func(e *core.RecordRequestEvent) error {
+		balance := e.Auth.GetInt("balance")
+		tokens := e.Record.GetInt("tokens")
+		if balance < tokens {
+			return apis.NewBadRequestError("Insufficient balance", nil)
+		}
+
+		// Running the ExpandRecord call in the transaction is important!!
+		// Running it outside the transaction allows a race condition where
+		// similarly timed poll vote creation events may overwrite each other's changes to the poll votes field.
+		err := app.RunInTransaction(func(txApp core.App) error {
+			errs := txApp.ExpandRecord(e.Record, []string{"poll"}, nil)
+			if len(errs) > 0 {
+				return apis.NewBadRequestError("Failed to expand poll relation", errs)
+			}
+			poll := e.Record.ExpandedOne("poll")
+
+			votes := []int{}
+			err := poll.UnmarshalJSONField("votes", &votes)
+			if err != nil {
+				return apis.NewInternalServerError("Failed to parse poll votes", err)
+			}
+
+			option := e.Record.GetInt("option")
+			if option < 0 || option >= len(votes) {
+				return apis.NewBadRequestError("Invalid poll option", nil)
+			}
+
+			votes[option] += tokens
+			poll.Set("votes", votes)
+
+			err = txApp.Save(poll)
+			if err != nil {
+				return err
+			}
+
+			// The user balance field has a min of 0, so this will error if they don't have enough.
+			// We've already checked their balance above anyway though.
+			e.Auth.Set("balance", balance-tokens)
+			err = txApp.Save(e.Auth)
+			if err != nil {
+				return err
+			}
+			return nil
+		})
 		if err != nil {
 			return err
 		}
 
-		e.Auth.Set("balance", e.Auth.GetInt("balance")-option.GetInt("cost"))
-		app.Save(e.Auth)
 		return e.Next()
 	})
 

@@ -103,6 +103,26 @@ export interface Announcement {
     updated: string;
 }
 
+export interface Poll {
+    id: string;
+    question: string;
+    options: string[];
+    votes: number[];
+    closed: boolean;
+    created: string;
+    updated: string;
+}
+
+export interface PollVote {
+    id: string;
+    user: string;
+    poll: string;
+    option: number;
+    tokens: number;
+    created: string;
+    updated: string;
+}
+
 interface TypedPocketBase extends PocketBase {
     collection(idOrName: string): RecordService // default fallback for any other collection
     collection(idOrName: 'streams'): RecordService<Stream>
@@ -117,6 +137,8 @@ interface TypedPocketBase extends PocketBase {
     collection(idOrName: 'participants'): RecordService<Participant>
     collection(idOrName: 'seasons'): RecordService<Season>
     collection(idOrName: 'announcements'): RecordService<Announcement>
+    collection(idOrName: 'polls'): RecordService<Poll>
+    collection(idOrName: 'poll_votes'): RecordService<PollVote>
 }
 
 export const pb = new PocketBase('http://127.0.0.1:8091') as TypedPocketBase;

@@ -221,11 +221,7 @@ export default function Home() {
               </div>
             </Panel.Body>
           </Panel>
-          <PollPanel
-            question="Who will exit the cell next?"
-            option1="Mike"
-            option2="Sean"
-          />
+          <PollPanel />
         </div>
 
         {/* Main Content - Streams */}

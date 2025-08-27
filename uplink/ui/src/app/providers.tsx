@@ -43,7 +43,6 @@ export function Providers({ children }: { children: React.ReactNode }) {
 
         // Listen for auth store changes
         const unsubscribe = pb.authStore.onChange((token, model) => {
-            console.log('Auth store changed:', { token, model });
             setUser(model as User | null);
         });
 

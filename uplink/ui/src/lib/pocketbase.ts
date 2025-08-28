@@ -25,6 +25,7 @@ export interface Stream {
     id: string
     title: string
     url: string
+    viewers: number
 }
 
 export interface Message {
@@ -123,6 +124,15 @@ export interface PollVote {
     updated: string;
 }
 
+export interface Heartbeat {
+    id: string;
+    user: string;
+    session_id: string;
+    stream: string;
+    created: string;
+    updated: string;
+}
+
 interface TypedPocketBase extends PocketBase {
     collection(idOrName: string): RecordService // default fallback for any other collection
     collection(idOrName: 'streams'): RecordService<Stream>
@@ -139,6 +149,7 @@ interface TypedPocketBase extends PocketBase {
     collection(idOrName: 'announcements'): RecordService<Announcement>
     collection(idOrName: 'polls'): RecordService<Poll>
     collection(idOrName: 'poll_votes'): RecordService<PollVote>
+    collection(idOrName: 'heartbeats'): RecordService<Heartbeat>
 }
 
 export const pb = new PocketBase('http://127.0.0.1:8091') as TypedPocketBase;

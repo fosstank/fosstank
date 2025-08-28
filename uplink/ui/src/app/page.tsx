@@ -37,6 +37,7 @@ import { ClientResponseError } from "pocketbase";
 
 export default function Home() {
   const [streams, setStreams] = useState<Stream[]>([]);
+  const [globalViewerCount, setGlobalViewerCount] = useState(0);
   const [isLoginOpen, setIsLoginOpen] = useState(false);
   const [ttsOpen, setTTSOpen] = useState(false);
   const [sfxOpen, setSFXOpen] = useState(false);
@@ -48,15 +49,47 @@ export default function Home() {
   const { user, setUser } = useContext(UserContext);
   const [chatMessages, setChatMessages] = useState<Message[]>([]);
   const [announcements, setAnnouncements] = useState<Announcement[]>([]);
+  const [sessionId] = useState<string>(crypto.randomUUID());
   const chatContainerRef = useRef<HTMLDivElement>(null);
+
+  // Send heartbeat every 60 seconds
+  const heartbeatState = useRef({ user, sessionId, selectedStreamIndex, streams });
+  useEffect(() => { heartbeatState.current = { user, sessionId, selectedStreamIndex, streams } }, [user, sessionId, selectedStreamIndex, streams]);
+  useEffect(() => {
+    const interval = setInterval(() => {
+      const state = heartbeatState.current;
+      pb.collection("heartbeats").create({
+        user: state.user !== null ? state.user.id : '',
+        session_id: state.sessionId,
+        stream: state.selectedStreamIndex !== null && state.streams[state.selectedStreamIndex] ? state.streams[state.selectedStreamIndex].id : ''
+      }).catch((err) => {
+        console.error("Failed to send heartbeat:", err);
+      });
+    }, 60000);
+    return () => clearInterval(interval);
+  }, []);
 
   useEffect(() => {
     pb.collection("streams").getFullList().then(streams => {
+      setGlobalViewerCount(streams.reduce((acc, stream) => acc + stream.viewers, 0));
       setStreams(streams);
     }).catch(err => {
       console.error("Failed to fetch streams:", err);
     });
   }, [])
+
+  useEffect(() => {
+    const unsubscribe = pb.realtime.subscribe("streams_heartbeat", (e) => {
+      const viewers = e.viewers as number;
+      const streams = e.streams as Stream[];
+      setGlobalViewerCount(viewers);
+      setStreams(streams);
+    });
+
+    return () => {
+      unsubscribe?.then(unsub => unsub());
+    };
+  }, []);
 
   const streamMap = useMemo(() => {
     const map = new Map<string, string>();
@@ -150,7 +183,7 @@ export default function Home() {
         <h1 className="text-3xl font-bold text-center lowercase">
           Fosstank
         </h1>
-        <img className="w-12 h-12" src={STATIC_ASSETS["avatar"]}></img>
+        <img className="w-12 h-12" src={STATIC_ASSETS["avatar"]} alt="logo"></img>
         <div className="flex-1"></div>
         <div className="flex-1 flex justify-end">
           {user === null ? (
@@ -230,7 +263,7 @@ export default function Home() {
             <HLSPlayer
               src={streams[selectedStreamIndex].url}
               title={streams[selectedStreamIndex].title}
-              subtitle="[ 194 ]"
+              subtitle={`[ ${streams[selectedStreamIndex].viewers.toLocaleString()} ]`}
               autoPlay={true}
               controls={streams[selectedStreamIndex].url !== ""}
               onLeft={() => setSelectedStreamIndex((i) => i !== null ? ((i - 1) + streams.length) % streams.length : null)}
@@ -243,7 +276,7 @@ export default function Home() {
                 <StreamPreview
                   key={stream.id}
                   title={stream.title}
-                  subtitle="(194)"
+                  subtitle={`(${stream.viewers.toLocaleString()})`}
                   offline={i > 6}
                   stream={stream}
                   onClick={() => setSelectedStreamIndex(i)}
@@ -257,7 +290,7 @@ export default function Home() {
         <Panel className="col-span-5 h-full">
           <Panel.Header color="blue" className="px-1">
             <Panel.Header.Title text="Chat" />
-            <Panel.Header.Subtitle text="[124 Online]" />
+            <Panel.Header.Subtitle text={`[${globalViewerCount} Online]`} />
           </Panel.Header>
           <Panel.Body>
             <div className="flex-1 flex flex-col gap-1">

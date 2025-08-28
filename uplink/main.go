@@ -18,15 +18,20 @@ package main
 
 import (
 	"embed"
+	"encoding/json"
 	"io/fs"
 	"log"
 	"os"
 	"strings"
+	"sync"
+	"time"
 
+	"github.com/pocketbase/dbx"
 	"github.com/pocketbase/pocketbase"
 	"github.com/pocketbase/pocketbase/apis"
 	"github.com/pocketbase/pocketbase/core"
 	"github.com/pocketbase/pocketbase/plugins/migratecmd"
+	"github.com/pocketbase/pocketbase/tools/subscriptions"
 )
 
 //go:embed ui/out/*
@@ -163,6 +168,65 @@ func main() {
 		}
 
 		return e.Next()
+	})
+
+	// Cron job to calculate each stream's viewer count every minute
+	app.Cron().MustAdd("viewer-count", "* * * * *", func() {
+		// window should match the client's heartbeat interval to prevent ghost viewers
+		window := time.Now().UTC().Add(-1 * time.Minute).Format("2006-01-02 15:04:05")
+		_, err := app.DB().Update("streams", dbx.Params{
+			"viewers": dbx.NewExp("(SELECT COUNT(DISTINCT session_id) FROM heartbeats WHERE heartbeats.stream = streams.id AND heartbeats.created >= {:cutoff})", dbx.Params{
+				"cutoff": window,
+			}),
+		}, nil).Execute()
+		if err != nil {
+			log.Println("Failed to update stream viewer counts:", err)
+			return
+		}
+
+		streamsHeartbeat := struct {
+			Viewers int            `json:"viewers" db:"viewers"`
+			Streams []*core.Record `json:"streams"`
+		}{}
+
+		// TODO: This count is sent to all clients every minute,
+		// but not when users first load the page. When they first load the page
+		// they do have the viewer count for each individual stream,
+		// so I cheat and sum those values to approximate the total viewer count.
+		// Should probably get the real value to the user on initial page load properly at some point.
+		streamsHeartbeat.Viewers = app.SubscriptionsBroker().TotalClients()
+		streamsHeartbeat.Streams, err = app.FindAllRecords("streams")
+		if err != nil {
+			log.Println("Failed to fetch streams for heartbeat:", err)
+			return
+		}
+
+		data, err := json.Marshal(streamsHeartbeat)
+		if err != nil {
+			log.Println("Failed to marshal streams heartbeat:", err)
+			return
+		}
+
+		message := subscriptions.Message{
+			Name: "streams_heartbeat",
+			Data: data,
+		}
+
+		chunks := app.SubscriptionsBroker().ChunkedClients(300)
+		var wg sync.WaitGroup
+		for _, chunk := range chunks {
+			wg.Go(func() {
+				for _, client := range chunk {
+					if !client.HasSubscription("streams_heartbeat") {
+						continue
+					}
+
+					client.Send(message)
+				}
+			})
+		}
+
+		wg.Wait()
 	})
 
 	if err := app.Start(); err != nil {

@@ -1,4 +1,4 @@
-import { useContext, useEffect, useState } from "react";
+import { useContext, useEffect, useRef, useState } from "react";
 import FloatingPanel from "./floating-panel";
 import { pb, Stream, TTSOption } from "@/lib/pocketbase";
 import PiggyValue from "./piggy-value";
@@ -22,6 +22,9 @@ export default function TTSPanel({ streams, selectedStreamIndex = null, isOpen, 
     const [selectedOption, setSelectedOption] = useState<number | null>(null);
     const [isLoading, setIsLoading] = useState(true);
     const { user, setUser } = useContext(UserContext);
+
+    const onCloseRef = useRef(onClose);
+    useEffect(() => { onCloseRef.current = onClose }, [onClose]);
     useEffect(() => {
         setIsLoading(true);
         pb.collection('tts_options').getFullList(200).then((options) => {
@@ -33,7 +36,7 @@ export default function TTSPanel({ streams, selectedStreamIndex = null, isOpen, 
             if (error.isAbort) { return }
             toast.error("Failed to fetch TTS options: " + error);
             console.error("Failed to fetch TTS options:", error);
-            onClose();
+            onCloseRef.current();
         })
     }, [])
 

@@ -34,6 +34,7 @@ import FosstoyPanel from "@/components/fosstoy-panel";
 import PiggyValue from "@/components/piggy-value";
 import { STATIC_ASSETS } from "@/lib/static-assets";
 import { ClientResponseError } from "pocketbase";
+import Image from "next/image";
 
 export default function Home() {
   const [streams, setStreams] = useState<Stream[]>([]);
@@ -183,7 +184,9 @@ export default function Home() {
         <h1 className="text-3xl font-bold text-center lowercase">
           Fosstank
         </h1>
-        <img className="w-12 h-12" src={STATIC_ASSETS["avatar"]} alt="logo"></img>
+        <div className="w-12 h-12 relative">
+          <Image fill={true} src={STATIC_ASSETS["avatar"]} alt="logo" unoptimized />
+        </div>
         <div className="flex-1"></div>
         <div className="flex-1 flex justify-end">
           {user === null ? (
@@ -201,11 +204,14 @@ export default function Home() {
                     <span className="font-bold">{user.username}</span>
                     <PiggyValue value={user.balance} />
                   </div>
-                  <img
-                    src={pb.files.getURL(user, user.avatar, { "thumb": "100x100" }) || STATIC_ASSETS["avatar"]}
-                    alt="Profile Picture"
-                    className="w-12 h-12 border border-neutral-600 rounded-sm"
-                  />
+                  <div className="w-12 h-12 relative border border-neutral-600 rounded-sm">
+                    <Image
+                      src={pb.files.getURL(user, user.avatar, { "thumb": "100x100" }) || STATIC_ASSETS["avatar"]}
+                      fill={true}
+                      alt="Profile Picture"
+                      unoptimized
+                    />
+                  </div>
                 </div>
               </DropdownMenuTrigger>
               <DropdownMenuContent>

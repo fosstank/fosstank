@@ -36,7 +36,7 @@ export default function LoginPanel({ isOpen, onClose, onLoginSuccess }: LoginPan
         username: ''
     });
     const [isLoading, setIsLoading] = useState(false);
-    const { user, setUser } = useContext(UserContext);
+    const { setUser } = useContext(UserContext);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -56,7 +56,7 @@ export default function LoginPanel({ isOpen, onClose, onLoginSuccess }: LoginPan
                     onLoginSuccess?.();
                     setIsLoading(false);
                 })
-                .catch((error) => {
+                .catch(() => {
                     toast.error('Login failed. Please check your credentials and try again.');
                     setIsLoading(false);
                 });

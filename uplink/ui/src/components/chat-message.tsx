@@ -15,6 +15,7 @@
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 import { STATIC_ASSETS } from "@/lib/static-assets";
+import Image from "next/image";
 
 interface ChatMessageProps {
     content: string;
@@ -28,11 +29,15 @@ export default function ChatMessage({ content, created, username, avatar, stream
     return (
         <div className="flex flex-col p-2">
             <div className="flex gap-1">
-                <img
-                    src={avatar || STATIC_ASSETS["avatar"]}
-                    alt="Profile Picture"
-                    className="w-8 h-8 border border-neutral-600"
-                />
+                <div className="w-8 h-8 relative">
+                    <Image
+                        src={avatar || STATIC_ASSETS["avatar"]}
+                        alt="Profile Picture"
+                        fill={true}
+                        className="border border-neutral-600"
+                        unoptimized
+                    />
+                </div>
                 <div className="flex-1 text-sm/3.5">
                     <span className="font-medium text-yellow-200 pr-1">{username}</span>
                     <span className="text-neutral-300 break-word">{content}</span>

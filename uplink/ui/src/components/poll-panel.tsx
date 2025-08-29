@@ -57,8 +57,8 @@ export default function PollPanel() {
             setSelectedOption(null);
             setVoteTokens("1");
             toast.success(`${tokenCount} vote${tokenCount > 1 ? 's' : ''} submitted!`);
-        } catch (error: any) {
-            toast.error("Failed to vote: " + error.message);
+        } catch (error) {
+            toast.error("Failed to vote: " + (error as ClientResponseError).message);
             console.error("Failed to vote:", error);
         }
     }

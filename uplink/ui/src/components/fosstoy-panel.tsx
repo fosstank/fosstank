@@ -1,6 +1,6 @@
-import { useContext, useEffect, useState } from "react";
+import { useContext, useEffect, useRef, useState } from "react";
 import FloatingPanel from "./floating-panel";
-import { FosstoyOption, FosstoyOrder, Participant, pb, Season } from "@/lib/pocketbase";
+import { FosstoyOption, Participant, pb, Season } from "@/lib/pocketbase";
 import PiggyValue from "./piggy-value";
 import DropdownMenu from "./dropdown-menu";
 import Button from "./button";
@@ -22,6 +22,8 @@ export default function FosstoyPanel({ isOpen, onClose }: FosstoyPanelProps) {
     const [isLoading, setIsLoading] = useState(false);
     const { user, setUser } = useContext(UserContext);
 
+    const onCloseRef = useRef(onClose);
+    useEffect(() => { onCloseRef.current = onClose }, [onClose]);
     useEffect(() => {
         const loadOptionsAndParticipants = async () => {
             setIsLoading(true);
@@ -29,7 +31,6 @@ export default function FosstoyPanel({ isOpen, onClose }: FosstoyPanelProps) {
             let loadedOptions: FosstoyOption[] = [];
             let loadedSeason: Season | null = null;
             let loadedParticipants: Participant[] = [];
-
 
             try {
                 // Load options and season in parallel
@@ -44,7 +45,7 @@ export default function FosstoyPanel({ isOpen, onClose }: FosstoyPanelProps) {
 
                 toast.error("Loading data failed: " + clientError.message);
                 console.error("Loading data failed: ", clientError);
-                onClose();
+                onCloseRef.current();
                 return;
             }
 
@@ -58,7 +59,7 @@ export default function FosstoyPanel({ isOpen, onClose }: FosstoyPanelProps) {
 
                 toast.error("Failed to load participants: " + clientError.message);
                 console.error("Failed to fetch participants:", clientError);
-                onClose();
+                onCloseRef.current();
                 return;
             }
 

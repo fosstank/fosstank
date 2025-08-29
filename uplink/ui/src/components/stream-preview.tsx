@@ -18,6 +18,7 @@
 
 import { Stream } from '@/lib/pocketbase';
 import { STATIC_ASSETS } from '@/lib/static-assets';
+import Image from 'next/image';
 import { useRef } from 'react';
 
 interface StreamPreviewProps {
@@ -47,10 +48,13 @@ export default function StreamPreview({ title, subtitle, stream, offline = false
                 }
             }}
         >
-            <img
+            <Image
                 ref={imgElement}
                 src={STATIC_ASSETS["noise"]}
-                className="relative w-full h-full object-cover bg-neutral-600 hover:brightness-110"
+                alt="noise"
+                fill={true}
+                className="object-cover bg-neutral-600 hover:brightness-110"
+                unoptimized
             />
             <div className="absolute top-0 left-0 w-full flex px-1">
                 <span className="text-yellow-200 uppercase">{title.replaceAll(" ", "_")}</span>

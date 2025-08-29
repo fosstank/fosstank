@@ -34,7 +34,7 @@ export default function StreamPreview({ title, subtitle, stream, offline = false
 
     return (
         <button
-            className={`${offline ? "brightness-50" : ""} cursor-pointer relative border border-neutral-600 rounded overflow-clip shadow-[4px_4px_0px_rgb(0_0_0/0.5)]`}
+            className={`${offline ? "brightness-50 saturate-0" : ""} cursor-pointer relative border-2 border-green-400 rounded-none overflow-clip shadow-[2px_2px_0px_rgb(0_0_0/1)] hover:shadow-[4px_4px_0px_rgb(0_0_0/1)] transition-all duration-100 bg-gray-900 hover:bg-gray-800`}
             onClick={onClick}
             onMouseEnter={() => {
                 // TODO: Play Sound Effect
@@ -53,13 +53,18 @@ export default function StreamPreview({ title, subtitle, stream, offline = false
                 src={STATIC_ASSETS["noise"]}
                 alt="noise"
                 fill={true}
-                className="object-cover bg-neutral-600 hover:brightness-110"
+                className="object-cover bg-black hover:brightness-110 hover:contrast-125"
                 unoptimized
             />
-            <div className="absolute top-0 left-0 w-full flex px-1">
-                <span className="text-yellow-200 uppercase">{title.replaceAll(" ", "_")}</span>
+            <div className="absolute top-0 left-0 w-full flex px-2 py-1 bg-black border-b border-green-400">
+                <div className="flex items-center gap-1">
+                    <div className={`w-2 h-2 rounded-full ${offline ? 'bg-red-500 animate-pulse' : 'bg-green-400'}`}></div>
+                    <span className="text-green-400 uppercase font-mono text-xs tracking-wider">CAM_{title.replaceAll(" ", "_").toUpperCase()}</span>
+                </div>
                 <div className="flex-1"></div>
-                <span className="uppercase">{offline ? "OFFLINE" : subtitle}</span>
+                <span className={`uppercase font-mono text-xs tracking-wider ${offline ? 'text-red-400 animate-pulse' : 'text-amber-300'}`}>
+                    {offline ? "SYSTEM_ERROR" : `SEC_LVL_${subtitle.toUpperCase()}`}
+                </span>
             </div>
         </button>
     );

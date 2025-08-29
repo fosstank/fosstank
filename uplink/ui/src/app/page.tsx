@@ -232,9 +232,9 @@ export default function Home() {
       <div className="grid grid-cols-24 gap-1 h-full">
         {/* Left Column */}
         <div className="col-span-3 flex flex-col gap-1 max-h-screen">
-          <Panel>
-            <Panel.Header color="blue" className="px-1">
-              <Panel.Header.Title text="Announcements" />
+          <Panel className="border-2 border-green-400 bg-black">
+            <Panel.Header color="blue" className="px-2 py-1 bg-green-800 border-b border-green-400">
+              <Panel.Header.Title text="FACILITY_ALERTS" className="text-green-200 font-mono text-sm tracking-wider font-bold" />
             </Panel.Header>
             <Panel.Body>
               <div className=" flex flex-col gap-2 overflow-y-auto">
@@ -242,19 +242,19 @@ export default function Home() {
                   announcements.map((announcement, index) => (
                     <>
                       <div key={announcement.id} className={`p-2 ${index === 0 ? '' : index === 1 ? 'brightness-90' : 'brightness-75'}`}>
-                        <h3 className="font-bold mb-1 text-cyan-300">{announcement.title}</h3>
-                        <p className="text-sm">{announcement.message}</p>
+                        <h3 className="font-bold mb-1 text-green-300 font-mono">{announcement.title}</h3>
+                        <p className="text-sm text-green-200">{announcement.message}</p>
                         <div className="flex justify-end text-xs font-thin -tracking-[1.5px]">
                           {/* TODO: Format timestamp correctly. Should look like: 8/10/25, 9:00 PM */}
-                          <span className="text-muted-foreground">{announcement.created}</span>
+                          <span className="text-green-400 font-mono">{announcement.created}</span>
                         </div>
                       </div>
-                      <hr className="h-0.5 bg-neutral-950"></hr>
+                      <hr className="h-0.5 bg-green-800"></hr>
                     </>
                   ))
                 ) : (
-                  <div className="text-center text-gray-400 text-sm p-4">
-                    All quiet in the tank...
+                  <div className="text-center text-green-400 text-sm p-4 font-mono">
+                    NO_ACTIVE_ALERTS...
                   </div>
                 )}
               </div>
@@ -293,10 +293,10 @@ export default function Home() {
         </div>
 
         {/* Chat Column */}
-        <Panel className="col-span-5 h-full">
-          <Panel.Header color="blue" className="px-1">
-            <Panel.Header.Title text="Chat" />
-            <Panel.Header.Subtitle text={`[${globalViewerCount} Online]`} />
+        <Panel className="col-span-5 h-full border-2 border-green-400 bg-black">
+          <Panel.Header color="blue" className="px-2 py-1 bg-green-800 border-b border-green-400">
+            <Panel.Header.Title text="SECURITY_OFFICE" className="text-green-200 font-mono text-sm tracking-wider font-bold" />
+            <Panel.Header.Subtitle text={`[${globalViewerCount}_GUARDS_ACTIVE]`} className="text-amber-300 font-mono text-xs font-bold" />
           </Panel.Header>
           <Panel.Body>
             <div className="flex-1 flex flex-col gap-1">
@@ -314,14 +314,14 @@ export default function Home() {
               </div>
             </div>
           </Panel.Body>
-          <Panel.Footer className="flex flex-col gap-1">
+          <Panel.Footer className="flex flex-col gap-1 bg-black border-t border-green-400">
             <form onSubmit={handleSendMessage} className="w-full">
               <input
                 type="text"
                 value={inputMessage}
                 onChange={(e) => setInputMessage(e.target.value)}
-                className="w-full p-1 bg-transparent placeholder-zinc-500 placeholder:text-shadow-[2px_2px_0px_rgb(0_0_0/0.75)]"
-                placeholder="Type a message..."
+                className="w-full p-2 bg-gray-900 border border-green-500 text-green-200 font-mono text-sm placeholder-green-400 focus:border-green-300 focus:outline-none"
+                placeholder="> SECURITY_LOG..."
                 minLength={1}
                 maxLength={180}
               />
@@ -333,9 +333,9 @@ export default function Home() {
               </button>
             </form>
             <div className="flex gap-1 p-2">
-              <Button className="px-1" onClick={() => user !== null ? (setTTSOpen(true), setTTSEverOpened(true)) : setIsLoginOpen(true)}>TTS</Button>
-              <Button className="px-1" onClick={() => user !== null ? (setSFXOpen(true), setSFXEverOpened(true)) : setIsLoginOpen(true)}>SFX</Button>
-              <Button className="px-1" onClick={() => user !== null ? (setFosstoysOpen(true), setFosstoysEverOpened(true)) : setIsLoginOpen(true)}>FOSSTOYS</Button>
+              <Button className="px-3 py-1 bg-green-900 border border-amber-500 text-amber-200 font-mono text-xs hover:bg-amber-500 hover:text-black transition-colors" onClick={() => user !== null ? (setTTSOpen(true), setTTSEverOpened(true)) : setIsLoginOpen(true)}>AUDIO_SYS</Button>
+              <Button className="px-3 py-1 bg-green-900 border border-amber-500 text-amber-200 font-mono text-xs hover:bg-amber-500 hover:text-black transition-colors" onClick={() => user !== null ? (setSFXOpen(true), setSFXEverOpened(true)) : setIsLoginOpen(true)}>ALARMS</Button>
+              <Button className="px-3 py-1 bg-green-900 border border-amber-500 text-amber-200 font-mono text-xs hover:bg-amber-500 hover:text-black transition-colors" onClick={() => user !== null ? (setFosstoysOpen(true), setFosstoysEverOpened(true)) : setIsLoginOpen(true)}>DOORS</Button>
             </div>
           </Panel.Footer>
         </Panel>

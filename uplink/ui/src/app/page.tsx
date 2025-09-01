@@ -58,7 +58,7 @@ export default function Home() {
 
   // Send heartbeat every 60 seconds
   const heartbeatState = useRef({ user, sessionId, selectedStreamIndex, streams });
-  useEffect(() => { heartbeatState.current = { user, sessionId, selectedStreamIndex, streams } }, [user, sessionId, selectedStreamIndex, streams]);
+  heartbeatState.current = { user, sessionId, selectedStreamIndex, streams };
   useEffect(() => {
     const interval = setInterval(() => {
       const state = heartbeatState.current;

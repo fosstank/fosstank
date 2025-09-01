@@ -24,7 +24,7 @@ export default function TTSPanel({ streams, selectedStreamIndex = null, isOpen, 
     const { user, setUser } = useContext(UserContext);
 
     const onCloseRef = useRef(onClose);
-    useEffect(() => { onCloseRef.current = onClose }, [onClose]);
+    onCloseRef.current = onClose;
     useEffect(() => {
         setIsLoading(true);
         pb.collection('tts_options').getFullList().then((options) => {

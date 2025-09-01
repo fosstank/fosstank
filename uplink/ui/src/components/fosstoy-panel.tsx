@@ -23,7 +23,7 @@ export default function FosstoyPanel({ isOpen, onClose }: FosstoyPanelProps) {
     const { user, setUser } = useContext(UserContext);
 
     const onCloseRef = useRef(onClose);
-    useEffect(() => { onCloseRef.current = onClose }, [onClose]);
+    onCloseRef.current = onClose;
     useEffect(() => {
         const loadOptionsAndParticipants = async () => {
             setIsLoading(true);

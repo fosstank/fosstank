@@ -27,7 +27,7 @@ export default function TTSPanel({ streams, selectedStreamIndex = null, isOpen, 
     useEffect(() => { onCloseRef.current = onClose }, [onClose]);
     useEffect(() => {
         setIsLoading(true);
-        pb.collection('tts_options').getFullList(200).then((options) => {
+        pb.collection('tts_options').getFullList().then((options) => {
             options.sort((a, b) => a.cost - b.cost);
             setTTSOptions(options)
             setSelectedOption(options.length > 0 ? 0 : null);

@@ -9,7 +9,6 @@ RUN npm run build
 
 FROM golang:1.25-alpine AS go-build
 WORKDIR /build
-RUN apk add go
 
 COPY go.mod go.sum *.go ./
 COPY migrations/. ./migrations

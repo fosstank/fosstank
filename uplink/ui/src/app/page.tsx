@@ -35,6 +35,7 @@ import PiggyValue from "@/components/piggy-value";
 import { STATIC_ASSETS } from "@/lib/static-assets";
 import { ClientResponseError } from "pocketbase";
 import Image from "next/image";
+import TokensPanel from "@/components/tokens-panel";
 
 export default function Home() {
   const [streams, setStreams] = useState<Stream[]>([]);
@@ -43,9 +44,11 @@ export default function Home() {
   const [ttsOpen, setTTSOpen] = useState(false);
   const [sfxOpen, setSFXOpen] = useState(false);
   const [fosstoysOpen, setFosstoysOpen] = useState(false);
+  const [tokensOpen, setTokensOpen] = useState(false);
   const [ttsEverOpened, setTTSEverOpened] = useState(false);
   const [sfxEverOpened, setSFXEverOpened] = useState(false);
   const [fosstoysEverOpened, setFosstoysEverOpened] = useState(false);
+  const [tokensEverOpened, setTokensEverOpened] = useState(false);
   const [selectedStreamIndex, setSelectedStreamIndex] = useState<number | null>(null);
   const { user, setUser } = useContext(UserContext);
   const [chatMessages, setChatMessages] = useState<Message[]>([]);
@@ -197,14 +200,16 @@ export default function Home() {
               Login
             </button>
           ) : (
-            <DropdownMenu>
-              <DropdownMenuTrigger>
-                <div className="flex space-x-2 hover:ring ring-cyan-500">
-                  <div className="flex flex-col">
-                    <span className="font-bold">{user.username}</span>
-                    <PiggyValue value={user.balance} />
-                  </div>
-                  <div className="w-12 h-12 relative border border-neutral-600 rounded-sm">
+            <div className="flex space-x-2">
+              <div className="flex flex-col">
+                <span className="font-bold">{user.username}</span>
+                <button onClick={() => (setTokensOpen(true), setTokensEverOpened(true))} className=" text-yellow-400 hover:text-yellow-300 cursor-pointer">
+                  <PiggyValue value={user.balance} />
+                </button>
+              </div>
+              <DropdownMenu>
+                <DropdownMenuTrigger>
+                  <div className="w-12 h-12 relative border-2 border-neutral-600 rounded-sm hover:border-cyan-500 overflow-clip">
                     <Image
                       src={pb.files.getURL(user, user.avatar, { "thumb": "100x100" }) || STATIC_ASSETS["avatar"]}
                       fill={true}
@@ -212,20 +217,20 @@ export default function Home() {
                       unoptimized
                     />
                   </div>
-                </div>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent>
-                <DropdownMenuItem
-                  onClick={() => {
-                    pb.authStore.clear();
-                    setUser(null);
-                  }}
-                  className="text-cyan-500 cursor-pointer"
-                >
-                  Logout
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent>
+                  <DropdownMenuItem
+                    onClick={() => {
+                      pb.authStore.clear();
+                      setUser(null);
+                    }}
+                    className="text-cyan-500 cursor-pointer"
+                  >
+                    Logout
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
           )}
         </div>
       </div>
@@ -353,6 +358,7 @@ export default function Home() {
       {ttsEverOpened && <TTSPanel streams={streams} selectedStreamIndex={selectedStreamIndex} isOpen={ttsOpen} onClose={() => setTTSOpen(false)}></TTSPanel>}
       {sfxEverOpened && <SFXPanel streams={streams} selectedStreamIndex={selectedStreamIndex} isOpen={sfxOpen} onClose={() => setSFXOpen(false)}></SFXPanel>}
       {fosstoysEverOpened && <FosstoyPanel isOpen={fosstoysOpen} onClose={() => setFosstoysOpen(false)}></FosstoyPanel>}
-    </div>
+      {tokensEverOpened && <TokensPanel isOpen={tokensOpen} onClose={() => setTokensOpen(false)}></TokensPanel>}
+    </div >
   );
 }

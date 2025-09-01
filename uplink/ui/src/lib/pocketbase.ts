@@ -133,6 +133,12 @@ export interface Heartbeat {
     updated: string;
 }
 
+export interface TokenBundle {
+    id: string;
+    tokens: number;
+    stripe_price_id: string;
+}
+
 interface TypedPocketBase extends PocketBase {
     collection(idOrName: string): RecordService // default fallback for any other collection
     collection(idOrName: 'streams'): RecordService<Stream>
@@ -150,6 +156,7 @@ interface TypedPocketBase extends PocketBase {
     collection(idOrName: 'polls'): RecordService<Poll>
     collection(idOrName: 'poll_votes'): RecordService<PollVote>
     collection(idOrName: 'heartbeats'): RecordService<Heartbeat>
+    collection(idOrName: 'token_bundles'): RecordService<TokenBundle>
 }
 
 export const pb = new PocketBase('http://127.0.0.1:8091') as TypedPocketBase;

@@ -16,7 +16,7 @@
 
 'use client';
 
-import { createContext, Dispatch, SetStateAction, useEffect, useState } from "react";
+import { createContext, Dispatch, SetStateAction, useEffect, useRef, useState } from "react";
 import { pb, User } from "@/lib/pocketbase";
 import { toast } from "@/components/toaster";
 
@@ -48,6 +48,25 @@ export function Providers({ children }: { children: React.ReactNode }) {
 
         return unsubscribe;
     }, []);
+
+    const userRef = useRef(user);
+    userRef.current = user;
+    const userId = user?.id;
+    useEffect(() => {
+        if (userId == null) { return }
+
+        const unsubscribe = pb.collection("users").subscribe(userId, (e) => {
+            const updatedUser = e.record as User;
+            setUser(updatedUser);
+            if (userRef.current && updatedUser.balance > userRef.current.balance) {
+                toast.success(`Received ${(updatedUser.balance - userRef.current.balance).toLocaleString()} tokens.`);
+            }
+        });
+
+        return () => {
+            unsubscribe?.then(unsub => unsub());
+        };
+    }, [userId])
 
     return (
         <UserContext.Provider value={{ user: user, setUser: setUser }}>

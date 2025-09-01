@@ -37,14 +37,9 @@ import (
 //go:embed ui/out/*
 var client embed.FS
 
+var app = pocketbase.New()
+
 func main() {
-	// 1. Create config for input video which will be cli arg passed to ffmpeg
-	//    Include in the config a param to set the camera name
-	// 2. Call ffmpeg cli to convert input from input format to HLS fmp4 AV1
-	// 3. Send HLS to CDN. Send camera name and playlist url(in CDN) to remote server
-
-	app := pocketbase.New()
-
 	// loosely check if it was executed using "go run"
 	isGoRun := strings.HasPrefix(os.Args[0], os.TempDir())
 

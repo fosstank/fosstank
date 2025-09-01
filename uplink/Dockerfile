@@ -7,7 +7,7 @@ RUN npm install
 COPY --from=ui . .
 RUN npm run build
 
-FROM alpine:3.22 AS go-build
+FROM golang:1.25-alpine AS go-build
 WORKDIR /build
 RUN apk add go
 

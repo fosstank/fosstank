@@ -159,4 +159,4 @@ interface TypedPocketBase extends PocketBase {
     collection(idOrName: 'token_bundles'): RecordService<TokenBundle>
 }
 
-export const pb = new PocketBase('http://127.0.0.1:8091') as TypedPocketBase;
+export const pb = new PocketBase(process.env.NEXT_PUBLIC_SITE_URL) as TypedPocketBase;

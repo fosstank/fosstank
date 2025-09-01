@@ -26,6 +26,8 @@ import (
 	"sync"
 	"time"
 
+	_ "github.com/fosstank/fosstank/uplink/migrations"
+
 	"github.com/pocketbase/dbx"
 	"github.com/pocketbase/pocketbase"
 	"github.com/pocketbase/pocketbase/apis"

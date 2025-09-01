@@ -123,7 +123,7 @@ export default function LoginPanel({ isOpen, onClose, onLoginSuccess }: LoginPan
                                 <div className="space-y-4">
                                     <div>
                                         <label htmlFor="username" className="block text-sm font-medium text-zinc-300 mb-2">
-                                            Username or Email
+                                            {isLogin ? "Username or Email" : "Username"}
                                         </label>
                                         <input
                                             id="username"

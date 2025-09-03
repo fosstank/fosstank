@@ -19,6 +19,7 @@ export default function PollPanel() {
         pb.collection("polls").getFirstListItem("", { sort: "-created" }).then(poll => {
             setPoll(poll);
         }).catch((error: ClientResponseError) => {
+            if (error.status === 404) { return; }
             toast.error("Failed to fetch poll: " + error.message);
             console.error("Failed to fetch poll:", error);
         });

@@ -193,12 +193,9 @@ export default function Home() {
         <div className="flex-1"></div>
         <div className="flex-1 flex justify-end">
           {user === null ? (
-            <button
-              onClick={() => setIsLoginOpen(true)}
-              className="hover:bg-cyan-400 hover:text-cyan-900 text-cyan-400 font-bold transition-colors uppercase tracking-wider focus:outline-none focus:ring-2 focus:ring-cyan-500/50"
-            >
-              Login
-            </button>
+            <Button onClick={() => setIsLoginOpen(true)} className="p-2 m-2" color="blue">
+              Log In
+            </Button>
           ) : (
             <div className="flex space-x-2">
               <div className="flex flex-col">

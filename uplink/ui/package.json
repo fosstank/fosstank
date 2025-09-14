@@ -9,8 +9,6 @@
     "lint": "next lint"
   },
   "dependencies": {
-    "@radix-ui/react-dropdown-menu": "^2.1.15",
-    "@radix-ui/react-tabs": "^1.1.12",
     "@stripe/react-stripe-js": "^3.9.2",
     "@stripe/stripe-js": "^7.9.0",
     "class-variance-authority": "^0.7.1",

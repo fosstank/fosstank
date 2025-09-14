@@ -180,7 +180,7 @@ export default function LoginPanel({ isOpen, onClose, onLoginSuccess }: LoginPan
                                 type="button"
                                 onClick={handleGoogleAuth}
                                 disabled={isLoading}
-                                className="w-full bg-zinc-800 hover:bg-zinc-700 disabled:bg-zinc-800/50 text-zinc-300 font-medium py-3 px-4 rounded transition-colors border border-zinc-700 focus:outline-none focus:ring-2 focus:ring-zinc-500/50 flex items-center justify-center gap-3 disabled:cursor-not-allowed"
+                                className="w-full bg-zinc-800 hover:bg-zinc-700 disabled:bg-zinc-800/50 text-zinc-300 font-medium py-3 px-4 rounded border border-zinc-700 focus:outline-none focus:ring-2 focus:ring-zinc-500/50 flex items-center justify-center gap-3 disabled:cursor-not-allowed"
                             >
                                 <svg className="w-5 h-5" viewBox="0 0 24 24">
                                     <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
@@ -274,7 +274,7 @@ export default function LoginPanel({ isOpen, onClose, onLoginSuccess }: LoginPan
                     <button
                         type="submit"
                         disabled={isLoading}
-                        className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-blue-600/50 text-white font-medium py-2 px-4 rounded transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500/50 disabled:cursor-not-allowed"
+                        className="w-full bg-blue-700 hover:bg-blue-600 disabled:bg-blue-600/50 text-white font-medium py-2 px-4 rounded focus:outline-none focus:ring-2 focus:ring-blue-500/50 disabled:cursor-not-allowed"
                     >
                         {isLoading ? 'Processing...' : (isForgotPassword ? 'Send Reset Email' : (isLogin ? 'Log In' : 'Create Account'))}
                     </button>
@@ -284,7 +284,7 @@ export default function LoginPanel({ isOpen, onClose, onLoginSuccess }: LoginPan
                             <button
                                 type="button"
                                 onClick={() => setIsForgotPassword(false)}
-                                className="text-sm text-zinc-400 hover:text-blue-400 transition-colors font-medium"
+                                className="text-sm text-zinc-400 hover:text-blue-400 font-medium"
                             >
                                 Back to Login
                             </button>
@@ -295,7 +295,7 @@ export default function LoginPanel({ isOpen, onClose, onLoginSuccess }: LoginPan
                                         type="button"
                                         onClick={() => setIsForgotPassword(true)}
                                         disabled={isLoading}
-                                        className="text-sm text-zinc-400 hover:text-blue-400 transition-colors disabled:text-zinc-600 disabled:cursor-not-allowed"
+                                        className="text-sm text-zinc-400 hover:text-blue-400 disabled:text-zinc-600 disabled:cursor-not-allowed"
                                     >
                                         Forgot your credentials?
                                     </button>
@@ -305,7 +305,7 @@ export default function LoginPanel({ isOpen, onClose, onLoginSuccess }: LoginPan
                                     <button
                                         type="button"
                                         onClick={() => setIsLogin(!isLogin)}
-                                        className="text-blue-400 hover:text-blue-300 transition-colors font-medium"
+                                        className="text-blue-400 hover:text-blue-300 font-medium"
                                     >
                                         {isLogin ? 'Create Account' : 'Sign In'}
                                     </button>

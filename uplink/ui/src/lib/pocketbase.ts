@@ -18,6 +18,7 @@ import PocketBase, { RecordModel, RecordService } from 'pocketbase';
 
 export interface User extends RecordModel {
     username: string;
+    avatar: string;
     balance: number;
 }
 

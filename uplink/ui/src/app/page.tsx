@@ -21,8 +21,6 @@ import { useContext, useEffect, useMemo, useRef, useState } from "react";
 import ChatMessage from "@/components/chat-message";
 import LoginPanel from "@/components/login";
 import { UserContext } from "./providers";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem } from "@/components/ui/dropdown-menu";
-import { DropdownMenuTrigger } from "@radix-ui/react-dropdown-menu";
 import Panel from "@/components/panel";
 import Button from "@/components/button";
 import StreamPreview from "@/components/stream-preview";
@@ -36,6 +34,7 @@ import { STATIC_ASSETS } from "@/lib/static-assets";
 import { ClientResponseError } from "pocketbase";
 import Image from "next/image";
 import TokensPanel from "@/components/tokens-panel";
+import AccountPanel from "@/components/account-panel";
 
 export default function Home() {
   const [streams, setStreams] = useState<Stream[]>([]);
@@ -45,12 +44,13 @@ export default function Home() {
   const [sfxOpen, setSFXOpen] = useState(false);
   const [fosstoysOpen, setFosstoysOpen] = useState(false);
   const [tokensOpen, setTokensOpen] = useState(false);
+  const [accountPanelOpen, setAccountPanelOpen] = useState(false);
   const [ttsEverOpened, setTTSEverOpened] = useState(false);
   const [sfxEverOpened, setSFXEverOpened] = useState(false);
   const [fosstoysEverOpened, setFosstoysEverOpened] = useState(false);
   const [tokensEverOpened, setTokensEverOpened] = useState(false);
   const [selectedStreamIndex, setSelectedStreamIndex] = useState<number | null>(null);
-  const { user, setUser } = useContext(UserContext);
+  const { user } = useContext(UserContext);
   const [chatMessages, setChatMessages] = useState<Message[]>([]);
   const [announcements, setAnnouncements] = useState<Announcement[]>([]);
   const [sessionId] = useState<string>(crypto.randomUUID());
@@ -164,6 +164,7 @@ export default function Home() {
     if (!inputMessage.trim()) return;
     if (!user) {
       toast.warning("You must be logged in to send messages");
+      setIsLoginOpen(true);
       return;
     }
 
@@ -204,29 +205,14 @@ export default function Home() {
                   <PiggyValue value={user.balance} />
                 </button>
               </div>
-              <DropdownMenu>
-                <DropdownMenuTrigger>
-                  <div className="w-12 h-12 relative border-2 border-neutral-600 rounded-sm hover:border-cyan-500 overflow-clip">
-                    <Image
-                      src={pb.files.getURL(user, user.avatar, { "thumb": "100x100" }) || STATIC_ASSETS["avatar"]}
-                      fill={true}
-                      alt="Profile Picture"
-                      unoptimized
-                    />
-                  </div>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent>
-                  <DropdownMenuItem
-                    onClick={() => {
-                      pb.authStore.clear();
-                      setUser(null);
-                    }}
-                    className="text-cyan-500 cursor-pointer"
-                  >
-                    Logout
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
+              <button onClick={() => setAccountPanelOpen(true)} className="w-12 h-12 relative border-2 border-neutral-600 rounded-sm hover:border-cyan-500 overflow-clip">
+                <Image
+                  src={pb.files.getURL(user, user.avatar, { "thumb": "100x100" }) || STATIC_ASSETS["avatar"]}
+                  fill={true}
+                  alt="Profile Picture"
+                  unoptimized
+                />
+              </button>
             </div>
           )}
         </div>
@@ -356,6 +342,7 @@ export default function Home() {
       {sfxEverOpened && <SFXPanel streams={streams} selectedStreamIndex={selectedStreamIndex} isOpen={sfxOpen} onClose={() => setSFXOpen(false)}></SFXPanel>}
       {fosstoysEverOpened && <FosstoyPanel isOpen={fosstoysOpen} onClose={() => setFosstoysOpen(false)}></FosstoyPanel>}
       {tokensEverOpened && <TokensPanel isOpen={tokensOpen} onClose={() => setTokensOpen(false)}></TokensPanel>}
+      <AccountPanel isOpen={accountPanelOpen} onClose={() => setAccountPanelOpen(false)}></AccountPanel>
     </div >
   );
 }

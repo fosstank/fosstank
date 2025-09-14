@@ -53,7 +53,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
     userRef.current = user;
     const userId = user?.id;
     useEffect(() => {
-        if (userId == null) { return }
+        if (!userId) { return }
 
         const unsubscribe = pb.collection("users").subscribe(userId, (e) => {
             const updatedUser = e.record as User;

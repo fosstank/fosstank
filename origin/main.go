@@ -19,109 +19,83 @@ package main
 import (
 	"bytes"
 	"context"
-	"embed"
-	"io/fs"
+	"fmt"
 	"log"
+	"net/http"
 	"os"
-	"os/exec"
+	"os/signal"
 	"path/filepath"
-	"strings"
 	"sync"
 
 	"github.com/fsnotify/fsnotify"
 	"github.com/pocketbase/pocketbase"
-	"github.com/pocketbase/pocketbase/apis"
 	"github.com/pocketbase/pocketbase/core"
-	"github.com/pocketbase/pocketbase/plugins/migratecmd"
 	"github.com/pocketbase/pocketbase/tools/filesystem"
-
-	_ "github.com/fosstank/fosstank/origin/migrations"
 )
-
-//go:embed ui/out/*
-var client embed.FS
 
 const STREAM_OUTPUT_DIR = "streams"
 
 func main() {
-	// 1. Create config for input video which will be cli arg passed to ffmpeg
-	//    Include in the config a param to set the camera name
-	// 2. Call ffmpeg cli to convert input from input format to HLS fmp4 AV1
-	// 3. Send HLS to CDN. Send camera name and playlist url(in CDN) to remote server
-
-	app := pocketbase.New()
-
-	// loosely check if it was executed using "go run"
-	isGoRun := strings.HasPrefix(os.Args[0], os.TempDir())
-
-	migratecmd.MustRegister(app, app.RootCmd, migratecmd.Config{
-		// enable auto creation of migration files when making collection changes in the Dashboard
-		// (the isGoRun check is to enable it only during development)
-		Automigrate: isGoRun,
-	})
-
-	// Serve ui
-	app.OnServe().BindFunc(func(se *core.ServeEvent) error {
-		public, err := fs.Sub(client, "ui/out")
+	streams, err := LoadStreams()
+	if err != nil {
+		log.Println("No existing streams.json found, creating new one.")
+		streams = Streams{}
+		err = streams.Save()
 		if err != nil {
-			return err
+			log.Fatal(err)
 		}
-		se.Router.GET("/{path...}", apis.Static(public, false))
-		return se.Next()
-	})
+	}
 
-	app.OnRecordCreate("streams").BindFunc(func(e *core.RecordEvent) error {
-		err := os.MkdirAll(STREAM_OUTPUT_DIR+"/"+e.Record.Id, 0755)
-		if err != nil {
-			return err
-		}
-		return e.Next()
-	})
+	mux := http.NewServeMux()
+	server := &http.Server{
+		Addr:    ":8090",
+		Handler: mux,
+	}
+
+	mux.HandleFunc("POST /streams", StreamCreateHandler(&streams))
 
 	// Start ffmpeg processes
 	ctx, cancel := context.WithCancel(context.Background())
 	var wg sync.WaitGroup
-	app.OnServe().BindFunc(func(e *core.ServeEvent) error {
-		streams, err := app.FindAllRecords("streams")
+	for _, stream := range streams {
+		if stream.Source == "" {
+			continue
+		}
+
+		err = os.MkdirAll(STREAM_OUTPUT_DIR+"/"+stream.Id, 0755)
 		if err != nil {
 			log.Fatal(err)
 		}
 
-		for _, stream := range streams {
-			if stream.GetString("source") == "" {
-				continue
-			}
+		go encodeStream(ctx, &wg, stream)
+	}
 
-			err = os.MkdirAll(STREAM_OUTPUT_DIR+"/"+stream.Id, 0755)
-			if err != nil {
-				log.Fatal(err)
-			}
+	gracefulShutdown := make(chan struct{})
+	go func() {
+		sigint := make(chan os.Signal, 1)
+		signal.Notify(sigint, os.Interrupt)
+		<-sigint
 
-			wg.Add(1)
-			go encodeStream(ctx, &wg, app, stream)
-		}
-		return e.Next()
-	})
-
-	// Serve stream output dir
-	app.OnServe().BindFunc(func(se *core.ServeEvent) error {
-		se.Router.GET("/"+STREAM_OUTPUT_DIR+"/{path...}", apis.Static(os.DirFS(STREAM_OUTPUT_DIR), false))
-		return se.Next()
-	})
-
-	// Kill ffmpeg processes
-	app.OnTerminate().BindFunc(func(e *core.TerminateEvent) error {
+		// We received an interrupt signal, shut down.
+		fmt.Println("Shutting down ffmpeg subprocesses...")
 		cancel()
 		wg.Wait()
-		return e.Next()
-	})
 
-	app.OnRecordUpdateRequest("streams").BindFunc(func(e *core.RecordRequestEvent) error {
+		fmt.Println("Shutting down HTTP server...")
+		if err := server.Shutdown(context.Background()); err != nil {
+			// Error from closing listeners, or context timeout:
+			log.Printf("HTTP server Shutdown: %v", err)
+		}
+		close(gracefulShutdown)
+		fmt.Println("Shutdown complete.")
+	}()
 
-		return e.Next()
-	})
+	// Serve stream output dir
+	fs := http.FileServer(http.Dir(STREAM_OUTPUT_DIR))
+	mux.Handle("/"+STREAM_OUTPUT_DIR+"/", http.StripPrefix("/"+STREAM_OUTPUT_DIR, fs))
 
-	if err := app.Start(); err != nil {
+	fmt.Println("Server started on", server.Addr)
+	if err := server.ListenAndServe(); err != http.ErrServerClosed {
 		log.Fatal(err)
 	}
 }
@@ -208,50 +182,4 @@ func syncS3(app *pocketbase.PocketBase, stream *core.Record, watcher *fsnotify.W
 			log.Println("error:", err)
 		}
 	}
-}
-
-func encodeStream(ctx context.Context, wg *sync.WaitGroup, app *pocketbase.PocketBase, stream *core.Record) error {
-	defer wg.Done()
-
-	// Sync stream outputs to S3 bucket
-	if app.Settings().S3.Enabled {
-		watcher, err := fsnotify.NewWatcher()
-		if err != nil {
-			log.Fatal(err)
-		}
-		defer watcher.Close()
-
-		go syncS3(app, stream, watcher)
-
-		err = watcher.Add(STREAM_OUTPUT_DIR + "/" + stream.Id)
-		if err != nil {
-			log.Fatal(err)
-		}
-	}
-
-	source := stream.GetString("source")
-
-	// FIXME: This will leak credentials if they are in the source url and ffmpeg decides to log it(e.g. if the rtsp device is off)
-	// https://trac.ffmpeg.org/ticket/11247
-	cmd := exec.CommandContext(ctx,
-		"ffmpeg",
-		"-loglevel", "error",
-		"-rtsp_transport", "tcp",
-		"-i", source,
-		"-c:a", "aac",
-		"-s", "hd1080",
-		"-c:v", "libsvtav1",
-		"-preset", "10",
-		"-b:v", "500k",
-		"-f", "hls",
-		"-hls_time", "6",
-		"-hls_list_size", "5",
-		"-hls_segment_type", "fmp4",
-		"-hls_flags", "delete_segments",
-		STREAM_OUTPUT_DIR+"/"+stream.Id+"/"+stream.Id+".m3u8",
-	)
-	cmd.Stdout = os.Stdout
-	cmd.Stderr = os.Stderr
-
-	return cmd.Run()
 }

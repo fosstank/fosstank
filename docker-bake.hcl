@@ -5,9 +5,6 @@ group "default" {
 target "origin" {
     tags= ["ghcr.io/fosstank/origin:latest"]
     context = "origin"
-    contexts = {
-        ui = "origin/ui"
-    }
 }
 
 target "uplink" {

@@ -34,6 +34,11 @@ const DATA_DIR = "ogn_data"
 const STREAM_OUTPUT_DIR = DATA_DIR + "/streams"
 
 func main() {
+	err := os.Mkdir(DATA_DIR, 0755)
+	if err != nil && !os.IsExist(err) {
+		log.Fatal(err)
+	}
+
 	streams, err := LoadStreams()
 	if err == os.ErrPermission {
 		log.Fatal(err)

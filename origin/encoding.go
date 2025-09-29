@@ -3,9 +3,13 @@ package main
 import (
 	"context"
 	"fmt"
+	"log"
 	"os"
 	"os/exec"
 	"sync"
+
+	"github.com/fsnotify/fsnotify"
+	"github.com/minio/minio-go/v7"
 )
 
 type Encoder string
@@ -29,25 +33,25 @@ var EncodingFlags = map[string][]string{
 	},
 }
 
-func encodeStream(ctx context.Context, wg *sync.WaitGroup, stream *Stream) error {
+func encodeStream(ctx context.Context, wg *sync.WaitGroup, s3Client *minio.Client, stream *Stream) error {
 	wg.Add(1)
 	defer wg.Done()
 
 	// Sync stream outputs to S3 bucket
-	// if app.Settings().S3.Enabled {
-	// 	watcher, err := fsnotify.NewWatcher()
-	// 	if err != nil {
-	// 		log.Fatal(err)
-	// 	}
-	// 	defer watcher.Close()
+	if s3Client != nil {
+		watcher, err := fsnotify.NewWatcher()
+		if err != nil {
+			log.Fatal(err)
+		}
+		defer watcher.Close()
 
-	// 	go syncS3(app, stream, watcher)
+		go syncS3(s3Client, stream, watcher)
 
-	// 	err = watcher.Add(STREAM_OUTPUT_DIR + "/" + stream.Id)
-	// 	if err != nil {
-	// 		log.Fatal(err)
-	// 	}
-	// }
+		err = watcher.Add(STREAM_OUTPUT_DIR + "/" + stream.Id)
+		if err != nil {
+			log.Fatal(err)
+		}
+	}
 
 	if stream.Source == "" {
 		return fmt.Errorf("no source provided for stream %s", stream.Id)

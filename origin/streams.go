@@ -18,7 +18,7 @@ type Stream struct {
 }
 
 func LoadStreams() (Streams, error) {
-	data, err := os.ReadFile("streams.json")
+	data, err := os.ReadFile(DATA_DIR + "/streams.json")
 	if err != nil {
 		return nil, err
 	}
@@ -33,11 +33,11 @@ func LoadStreams() (Streams, error) {
 }
 
 func (s Streams) Save() error {
-	data, err := json.Marshal(s)
+	data, err := json.MarshalIndent(s, "", "\t")
 	if err != nil {
 		return err
 	}
-	return os.WriteFile("streams.json", data, 0644)
+	return os.WriteFile(DATA_DIR+"/streams.json", data, 0644)
 }
 
 func (s Streams) GetId(id string) (*Stream, error) {

@@ -17,32 +17,66 @@
 package main
 
 import (
-	"bytes"
 	"context"
 	"fmt"
 	"log"
 	"net/http"
 	"os"
 	"os/signal"
-	"path/filepath"
 	"sync"
 
-	"github.com/fsnotify/fsnotify"
-	"github.com/pocketbase/pocketbase"
-	"github.com/pocketbase/pocketbase/core"
-	"github.com/pocketbase/pocketbase/tools/filesystem"
+	"github.com/google/uuid"
+	"github.com/minio/minio-go/v7"
+	"github.com/minio/minio-go/v7/pkg/credentials"
 )
 
-const STREAM_OUTPUT_DIR = "streams"
+const DATA_DIR = "ogn_data"
+const STREAM_OUTPUT_DIR = DATA_DIR + "/streams"
 
 func main() {
 	streams, err := LoadStreams()
-	if err != nil {
+	if err == os.ErrPermission {
+		log.Fatal(err)
+	} else if err != nil {
 		log.Println("No existing streams.json found, creating new one.")
-		streams = Streams{}
+		streams = Streams{
+			{
+				Id:      uuid.NewString(),
+				Name:    "Stream 1",
+				Source:  "",
+				Encoder: EncoderLibX264,
+			},
+		}
 		err = streams.Save()
 		if err != nil {
 			log.Fatal(err)
+		}
+	}
+
+	var s3Client *minio.Client
+	s3Endpoint := os.Getenv("S3_ENDPOINT")
+	s3AccessKey := os.Getenv("S3_ACCESS_KEY")
+	s3SecretKey := os.Getenv("S3_SECRET_KEY")
+	if s3Endpoint != "" && s3AccessKey != "" && s3SecretKey != "" {
+		s3Client, err = minio.New(s3Endpoint, &minio.Options{
+			Creds:  credentials.NewStaticV4(s3AccessKey, s3SecretKey, ""),
+			Secure: false,
+		})
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		// Make sure the bucket exists
+		exists, err := s3Client.BucketExists(context.Background(), "fosstank-streams")
+		if err != nil {
+			log.Fatal(err)
+		}
+		if !exists {
+			err = s3Client.MakeBucket(context.Background(), "fosstank-streams", minio.MakeBucketOptions{})
+			if err != nil {
+				log.Fatal(err)
+			}
+			fmt.Println("Created S3 bucket: fosstank-streams")
 		}
 	}
 
@@ -67,7 +101,7 @@ func main() {
 			log.Fatal(err)
 		}
 
-		go encodeStream(ctx, &wg, stream)
+		go encodeStream(ctx, &wg, s3Client, stream)
 	}
 
 	gracefulShutdown := make(chan struct{})
@@ -97,89 +131,5 @@ func main() {
 	fmt.Println("Server started on", server.Addr)
 	if err := server.ListenAndServe(); err != http.ErrServerClosed {
 		log.Fatal(err)
-	}
-}
-
-func syncS3(app *pocketbase.PocketBase, stream *core.Record, watcher *fsnotify.Watcher) {
-	for {
-		select {
-		case event, ok := <-watcher.Events:
-			if !ok {
-				continue
-			}
-
-			// ffmpeg writes the .m3u8 to a .tmp file before committing it. We don't care about these events.
-			if filepath.Ext(event.Name) == ".tmp" {
-				continue
-			}
-
-			if event.Has(fsnotify.Create) {
-				// When ffmpeg updates the .m3u8 playlist file, we know it is done writing the latest .ts file.
-				// Any other create events we don't care about.
-				if filepath.Ext(event.Name) != ".m3u8" {
-					continue
-				}
-
-				playlistData, err := os.ReadFile(event.Name)
-				if err != nil {
-					// retry?
-					log.Println("error reading playlist data:", event.Name)
-					continue
-				}
-
-				b := bytes.TrimRight(playlistData, "\r\n")
-				lines := bytes.Split(b, []byte("\n"))
-				latestSegment := string(lines[len(lines)-1])
-
-				// Upload segment to S3
-				f, err := filesystem.NewFileFromPath(STREAM_OUTPUT_DIR + "/" + stream.Id + "/" + latestSegment)
-				// Pocketbase will automatically add random chars to the end of the filename.
-				// The .m3u8 playlist requires we keep the name as is.
-				f.Name = f.OriginalName
-				if err != nil {
-					log.Println("error creating filesystem for segment:", latestSegment)
-					continue
-				}
-				stream.Set("artifacts+", f)
-				err = app.Save(stream)
-				if err != nil {
-					// FIXME: retry?
-					log.Println("error saving segment to S3:", latestSegment)
-					continue
-				}
-
-				// After segment upload, upload playlist to S3
-				f, err = filesystem.NewFileFromPath(event.Name)
-				// Pocketbase will automatically add random chars to the end of the filename.
-				// The .m3u8 playlist requires we keep the name as is.
-				f.Name = f.OriginalName
-				if err != nil {
-					log.Println("error creating filesystem for playlist:", filepath.Base(event.Name))
-					continue
-				}
-				stream.Set("artifacts+", f)
-				err = app.Save(stream)
-				if err != nil {
-					// FIXME: retry?
-					log.Println("error saving playlist to S3:", filepath.Base(event.Name))
-					continue
-				}
-			} else if event.Has(fsnotify.Remove) {
-				// ffmpeg has deleted a file(because of the -hls_list_size flag).
-				// We need to delete it in S3.
-				stream.Set("artifacts-", filepath.Base(event.Name))
-				err := app.Save(stream)
-				if err != nil {
-					// FIXME: retry?
-					log.Println("error deleting segment from S3:", filepath.Base(event.Name))
-					continue
-				}
-			}
-		case err, ok := <-watcher.Errors:
-			if !ok {
-				continue
-			}
-			log.Println("error:", err)
-		}
 	}
 }

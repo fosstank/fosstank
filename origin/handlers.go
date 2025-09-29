@@ -11,7 +11,7 @@ import (
 func StreamCreateHandler(streams *Streams) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		id := uuid.New()
-		err := os.MkdirAll(STREAM_OUTPUT_DIR+"/"+id.String(), 0755)
+		err := os.MkdirAll(DATA_DIR+"/"+STREAM_OUTPUT_DIR+"/"+id.String(), 0755)
 		if err != nil {
 			http.Error(w, "Error creating stream directory", http.StatusInternalServerError)
 		}

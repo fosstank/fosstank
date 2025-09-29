@@ -44,7 +44,7 @@ func syncS3(client *minio.Client, stream *Stream, watcher *fsnotify.Watcher) {
 
 				// Upload segment to S3
 				// TODO: use a proper context
-				_, err = client.FPutObject(context.Background(), "fosstank-streams", stream.Id+"/"+latestSegment, STREAM_OUTPUT_DIR+"/"+stream.Id+"/"+latestSegment, minio.PutObjectOptions{ContentType: "video/mp2t"})
+				_, err = client.FPutObject(context.Background(), "fosstank-streams", stream.Id+"/"+latestSegment, DATA_DIR+"/"+STREAM_OUTPUT_DIR+"/"+stream.Id+"/"+latestSegment, minio.PutObjectOptions{ContentType: "video/mp2t"})
 				if err != nil {
 					// FIXME: retry?
 					log.Println("error saving segment to S3:", latestSegment)

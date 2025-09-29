@@ -31,7 +31,7 @@ import (
 )
 
 const DATA_DIR = "ogn_data"
-const STREAM_OUTPUT_DIR = DATA_DIR + "/streams"
+const STREAM_OUTPUT_DIR = "streams"
 
 func main() {
 	err := os.Mkdir(DATA_DIR, 0755)
@@ -101,7 +101,7 @@ func main() {
 			continue
 		}
 
-		err = os.MkdirAll(STREAM_OUTPUT_DIR+"/"+stream.Id, 0755)
+		err = os.MkdirAll(DATA_DIR+"/"+STREAM_OUTPUT_DIR+"/"+stream.Id, 0755)
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -130,7 +130,7 @@ func main() {
 	}()
 
 	// Serve stream output dir
-	fs := http.FileServer(http.Dir(STREAM_OUTPUT_DIR))
+	fs := http.FileServer(http.Dir(DATA_DIR + "/" + STREAM_OUTPUT_DIR))
 	mux.Handle("/"+STREAM_OUTPUT_DIR+"/", http.StripPrefix("/"+STREAM_OUTPUT_DIR, fs))
 
 	fmt.Println("Server started on", server.Addr)

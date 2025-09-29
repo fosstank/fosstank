@@ -47,7 +47,7 @@ func encodeStream(ctx context.Context, wg *sync.WaitGroup, s3Client *minio.Clien
 
 		go syncS3(s3Client, stream, watcher)
 
-		err = watcher.Add(STREAM_OUTPUT_DIR + "/" + stream.Id)
+		err = watcher.Add(DATA_DIR + "/" + STREAM_OUTPUT_DIR + "/" + stream.Id)
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -83,7 +83,7 @@ func encodeStream(ctx context.Context, wg *sync.WaitGroup, s3Client *minio.Clien
 		"-hls_list_size", "5",
 		"-hls_segment_type", "fmp4",
 		"-hls_flags", "delete_segments",
-		STREAM_OUTPUT_DIR + "/" + stream.Id + "/" + stream.Id + ".m3u8",
+		DATA_DIR + "/" + STREAM_OUTPUT_DIR + "/" + stream.Id + "/" + stream.Id + ".m3u8",
 	}...)
 
 	cmd := exec.CommandContext(ctx, args[0], args[1:]...)

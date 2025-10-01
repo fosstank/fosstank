@@ -79,9 +79,14 @@ func encodeStream(ctx context.Context, stream *Stream) error {
 		"-f", "hls",
 		"-hls_time", "6",
 		"-hls_list_size", "5",
+		// "-hls_wrap", "10",
 		"-hls_segment_type", "fmp4",
 		"-hls_flags", "delete_segments",
+		"-hls_segment_filename", DATA_DIR + "/" + STREAM_OUTPUT_DIR + "/" + stream.Id + "/" + stream.Id + "_%d.m4s",
 		DATA_DIR + "/" + STREAM_OUTPUT_DIR + "/" + stream.Id + "/" + stream.Id + ".m3u8",
+		"-vf", "fps=1/60",
+		"-update", "1", "-y",
+		DATA_DIR + "/" + STREAM_OUTPUT_DIR + "/" + stream.Id + "/thumbnail.jpg",
 	}...)
 
 	cmd := exec.CommandContext(ctx, args[0], args[1:]...)

@@ -6,10 +6,8 @@ import (
 	"log"
 	"os"
 	"os/exec"
-	"sync"
 
 	"github.com/fsnotify/fsnotify"
-	"github.com/minio/minio-go/v7"
 )
 
 type Encoder string
@@ -33,9 +31,9 @@ var EncodingFlags = map[string][]string{
 	},
 }
 
-func encodeStream(ctx context.Context, wg *sync.WaitGroup, s3Client *minio.Client, stream *Stream) error {
-	wg.Add(1)
-	defer wg.Done()
+func encodeStream(ctx context.Context, stream *Stream) error {
+	encodersWg.Add(1)
+	defer encodersWg.Done()
 
 	// Sync stream outputs to S3 bucket
 	if s3Client != nil {

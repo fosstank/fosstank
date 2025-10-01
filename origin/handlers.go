@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"encoding/json"
 	"net/http"
 	"os"
@@ -10,24 +11,120 @@ import (
 
 func StreamCreateHandler(streams *Streams) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		id := uuid.New()
-		err := os.MkdirAll(DATA_DIR+"/"+STREAM_OUTPUT_DIR+"/"+id.String(), 0755)
-		if err != nil {
-			http.Error(w, "Error creating stream directory", http.StatusInternalServerError)
-		}
-
 		stream := &Stream{}
-		err = json.NewDecoder(r.Body).Decode(stream)
+		err := json.NewDecoder(r.Body).Decode(stream)
 		if err != nil {
 			http.Error(w, "Error parsing JSON data", http.StatusBadRequest)
 			return
 		}
-		stream.Id = id.String()
+
+		if stream.Id == "" {
+			stream.Id = uuid.NewString()
+		}
+		err = os.MkdirAll(DATA_DIR+"/"+STREAM_OUTPUT_DIR+"/"+stream.Id, 0755)
+		if err != nil {
+			http.Error(w, "Error creating stream directory", http.StatusInternalServerError)
+		}
+
 		newStreams := (*streams).Add(stream)
 		streams = &newStreams
 		err = streams.Save()
 		if err != nil {
 			http.Error(w, "Error saving streams", http.StatusInternalServerError)
+			return
+		}
+	}
+}
+
+func StreamRetrieveHandler(streams *Streams) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		id := r.PathValue("id")
+		stream, err := streams.Get(id)
+		if err != nil {
+			http.Error(w, "Stream not found", http.StatusNotFound)
+			return
+		}
+
+		w.Header().Set("Content-Type", "application/json")
+		err = json.NewEncoder(w).Encode(stream)
+		if err != nil {
+			http.Error(w, "Error encoding JSON data", http.StatusInternalServerError)
+			return
+		}
+	}
+}
+
+func StreamUpdateHandler(streams *Streams) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		newStream := &Stream{}
+		err := json.NewDecoder(r.Body).Decode(newStream)
+		if err != nil {
+			http.Error(w, "Error parsing JSON data", http.StatusBadRequest)
+			return
+		}
+
+		id := r.PathValue("id")
+		stream, err := streams.Get(id)
+		if err != nil {
+			http.Error(w, "Stream not found", http.StatusNotFound)
+			return
+		}
+		stream.Id = newStream.Id
+
+		if newStream.Source != stream.Source || newStream.Encoder != stream.Encoder {
+			if stream.SubprocessCancelFunc != nil {
+				stream.SubprocessCancelFunc()
+			}
+			encodingCtx, encodingCancel := context.WithCancel(context.Background())
+			stream.SubprocessCancelFunc = encodingCancel
+			go encodeStream(encodingCtx, stream)
+		}
+
+		newStreams, err := (*streams).Update(stream)
+		if err != nil {
+			http.Error(w, "Error updating stream", http.StatusInternalServerError)
+			return
+		}
+
+		streams = &newStreams
+		err = streams.Save()
+		if err != nil {
+			http.Error(w, "Error saving streams", http.StatusInternalServerError)
+			return
+		}
+	}
+}
+
+func StreamDeleteHandler(streams *Streams) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		id := r.PathValue("id")
+
+		stream, err := streams.Get(id)
+		if err != nil {
+			http.Error(w, "Stream not found", http.StatusNotFound)
+			return
+		}
+
+		if stream.SubprocessCancelFunc != nil {
+			stream.SubprocessCancelFunc()
+		}
+
+		newStreams, err := (*streams).Remove(id)
+		if err != nil {
+			http.Error(w, "Stream not found", http.StatusNotFound)
+			return
+		}
+
+		streams = &newStreams
+		err = streams.Save()
+		if err != nil {
+			http.Error(w, "Error saving streams", http.StatusInternalServerError)
+			return
+		}
+
+		err = os.RemoveAll(DATA_DIR + "/" + STREAM_OUTPUT_DIR + "/" + id)
+		if err != nil {
+			http.Error(w, "Error deleting stream directory", http.StatusInternalServerError)
 			return
 		}
 	}

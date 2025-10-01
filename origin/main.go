@@ -33,6 +33,9 @@ import (
 const DATA_DIR = "ogn_data"
 const STREAM_OUTPUT_DIR = "streams"
 
+var s3Client *minio.Client
+var encodersWg sync.WaitGroup
+
 func main() {
 	err := os.Mkdir(DATA_DIR, 0755)
 	if err != nil && !os.IsExist(err) {
@@ -58,7 +61,6 @@ func main() {
 		}
 	}
 
-	var s3Client *minio.Client
 	s3Endpoint := os.Getenv("S3_ENDPOINT")
 	s3AccessKey := os.Getenv("S3_ACCESS_KEY")
 	s3SecretKey := os.Getenv("S3_SECRET_KEY")
@@ -92,10 +94,12 @@ func main() {
 	}
 
 	mux.HandleFunc("POST /streams", StreamCreateHandler(&streams))
+	mux.HandleFunc("GET /streams/{id}", StreamRetrieveHandler(&streams))
+	mux.HandleFunc("UPDATE /streams/{id}", StreamUpdateHandler(&streams))
+	mux.HandleFunc("DELETE /streams/{id}", StreamDeleteHandler(&streams))
 
 	// Start ffmpeg processes
 	ctx, cancel := context.WithCancel(context.Background())
-	var wg sync.WaitGroup
 	for _, stream := range streams {
 		if stream.Source == "" {
 			continue
@@ -106,7 +110,9 @@ func main() {
 			log.Fatal(err)
 		}
 
-		go encodeStream(ctx, &wg, s3Client, stream)
+		encodingCtx, encodingCancel := context.WithCancel(ctx)
+		stream.SubprocessCancelFunc = encodingCancel
+		go encodeStream(encodingCtx, stream)
 	}
 
 	gracefulShutdown := make(chan struct{})
@@ -118,7 +124,7 @@ func main() {
 		// We received an interrupt signal, shut down.
 		fmt.Println("Shutting down ffmpeg subprocesses...")
 		cancel()
-		wg.Wait()
+		encodersWg.Wait()
 
 		fmt.Println("Shutting down HTTP server...")
 		if err := server.Shutdown(context.Background()); err != nil {

@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"os"
@@ -15,6 +16,8 @@ type Stream struct {
 	Name    string  `json:"name"`
 	Source  string  `json:"source"`
 	Encoder Encoder `json:"encoder"`
+
+	SubprocessCancelFunc context.CancelFunc `json:"-"`
 }
 
 func LoadStreams() (Streams, error) {
@@ -40,7 +43,7 @@ func (s Streams) Save() error {
 	return os.WriteFile(DATA_DIR+"/streams.json", data, 0644)
 }
 
-func (s Streams) GetId(id string) (*Stream, error) {
+func (s Streams) Get(id string) (*Stream, error) {
 	for _, stream := range s {
 		if stream.Id == id {
 			return stream, nil
@@ -53,7 +56,7 @@ func (s Streams) Add(stream *Stream) Streams {
 	return append(s, stream)
 }
 
-func (s Streams) RemoveId(id string) (Streams, error) {
+func (s Streams) Remove(id string) (Streams, error) {
 	for i, stream := range s {
 		if stream.Id == id {
 			return append(s[:i], s[i+1:]...), nil

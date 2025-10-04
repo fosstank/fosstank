@@ -95,7 +95,7 @@ func main() {
 
 	mux.HandleFunc("POST /streams", StreamCreateHandler(&streams))
 	mux.HandleFunc("GET /streams/{id}", StreamRetrieveHandler(&streams))
-	mux.HandleFunc("UPDATE /streams/{id}", StreamUpdateHandler(&streams))
+	mux.HandleFunc("PUT /streams/{id}", StreamUpdateHandler(&streams))
 	mux.HandleFunc("DELETE /streams/{id}", StreamDeleteHandler(&streams))
 
 	// Start ffmpeg processes

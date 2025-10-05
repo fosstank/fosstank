@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"io/fs"
 	"log"
 	"os"
 )
@@ -16,7 +17,7 @@ type Streams []*Stream
 
 type Stream struct {
 	Id      string  `json:"id"`
-	Name    string  `json:"name"`
+	Title   string  `json:"title"`
 	Source  string  `json:"source"`
 	Encoder Encoder `json:"encoder"`
 
@@ -24,15 +25,12 @@ type Stream struct {
 }
 
 func LoadStreams() (Streams, error) {
-	data, err := os.ReadFile(DATA_DIR + "/" + STREAMS_FILE)
-	if err == os.ErrPermission {
-		return nil, err
-	} else if err != nil {
+	if _, err := os.Stat(DATA_DIR + "/" + STREAMS_FILE); errors.Is(err, fs.ErrNotExist) {
 		log.Println("No existing streams file found, creating new one.")
 		streams := Streams{
 			{
 				Id:      generateRandomString(16),
-				Name:    "Stream 1",
+				Title:   "Stream 1",
 				Source:  "",
 				Encoder: EncoderLibX264,
 			},
@@ -42,6 +40,13 @@ func LoadStreams() (Streams, error) {
 			return nil, err
 		}
 		return streams, nil
+	} else if err != nil {
+		return nil, err
+	}
+
+	data, err := os.ReadFile(DATA_DIR + "/" + STREAMS_FILE)
+	if err != nil {
+		return nil, err
 	}
 
 	var streams Streams
@@ -83,12 +88,27 @@ func (s Streams) Remove(id string) (Streams, error) {
 	return nil, ErrNotFound
 }
 
-func (s Streams) Update(newStream *Stream) (Streams, error) {
-	for i, stream := range s {
-		if stream.Id == newStream.Id {
-			s[i] = newStream
-			return s, nil
-		}
+func (s Streams) Update(id string, newStream *Stream) (Streams, error) {
+	stream, err := s.Get(newStream.Id)
+	if err != nil {
+		return nil, err
 	}
-	return nil, ErrNotFound
+
+	if stream.Id != newStream.Id {
+		stream.Id = newStream.Id
+	}
+
+	if stream.Title != newStream.Title {
+		stream.Title = newStream.Title
+	}
+
+	if stream.Source != newStream.Source {
+		stream.Source = newStream.Source
+	}
+
+	if stream.Encoder != newStream.Encoder {
+		stream.Encoder = newStream.Encoder
+	}
+
+	return s, nil
 }

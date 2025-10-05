@@ -18,19 +18,29 @@ func StreamCreateHandler(streams *Streams) http.HandlerFunc {
 
 		if stream.Id == "" {
 			stream.Id = generateRandomString(16)
+		} else {
+			_, err := streams.Get(stream.Id)
+			if err == nil {
+				http.Error(w, "Stream with this ID already exists", http.StatusBadRequest)
+				return
+			}
 		}
+
 		err = os.MkdirAll(DATA_DIR+"/"+STREAM_OUTPUT_DIR+"/"+stream.Id, 0755)
 		if err != nil {
 			http.Error(w, "Error creating stream directory", http.StatusInternalServerError)
 		}
 
-		newStreams := (*streams).Add(stream)
-		streams = &newStreams
+		*streams = (*streams).Add(stream)
 		err = streams.Save()
 		if err != nil {
 			http.Error(w, "Error saving streams", http.StatusInternalServerError)
 			return
 		}
+
+		encodingCtx, encodingCancel := context.WithCancel(encodersCtx)
+		stream.SubprocessCancelFunc = encodingCancel
+		go encodeStream(encodingCtx, stream)
 
 		w.Header().Set("Content-Type", "application/json")
 		err = json.NewEncoder(w).Encode(stream)
@@ -74,27 +84,34 @@ func StreamUpdateHandler(streams *Streams) http.HandlerFunc {
 			http.Error(w, "Stream not found", http.StatusNotFound)
 			return
 		}
-		stream.Id = newStream.Id
 
 		if newStream.Source != stream.Source || newStream.Encoder != stream.Encoder {
 			if stream.SubprocessCancelFunc != nil {
 				stream.SubprocessCancelFunc()
 			}
-			encodingCtx, encodingCancel := context.WithCancel(context.Background())
-			stream.SubprocessCancelFunc = encodingCancel
-			go encodeStream(encodingCtx, stream)
+			if newStream.Source != "" && newStream.Encoder != "" {
+				encodingCtx, encodingCancel := context.WithCancel(context.Background())
+				stream.SubprocessCancelFunc = encodingCancel
+				go encodeStream(encodingCtx, stream)
+			}
 		}
 
-		newStreams, err := (*streams).Update(stream)
+		*streams, err = (*streams).Update(id, newStream)
 		if err != nil {
 			http.Error(w, "Error updating stream", http.StatusInternalServerError)
 			return
 		}
 
-		streams = &newStreams
 		err = streams.Save()
 		if err != nil {
 			http.Error(w, "Error saving streams", http.StatusInternalServerError)
+			return
+		}
+
+		w.Header().Set("Content-Type", "application/json")
+		err = json.NewEncoder(w).Encode(stream)
+		if err != nil {
+			http.Error(w, "Error encoding JSON data", http.StatusInternalServerError)
 			return
 		}
 	}
@@ -114,13 +131,12 @@ func StreamDeleteHandler(streams *Streams) http.HandlerFunc {
 			stream.SubprocessCancelFunc()
 		}
 
-		newStreams, err := (*streams).Remove(id)
+		*streams, err = (*streams).Remove(id)
 		if err != nil {
 			http.Error(w, "Stream not found", http.StatusNotFound)
 			return
 		}
 
-		streams = &newStreams
 		err = streams.Save()
 		if err != nil {
 			http.Error(w, "Error saving streams", http.StatusInternalServerError)

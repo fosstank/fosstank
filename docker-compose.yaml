@@ -13,6 +13,8 @@ services:
       S3_SECRET_KEY: "${S3_SECRET_KEY:-minioadmin}"
     volumes:
       - ./origin/ogn_data:/ogn_data
+    depends_on:
+      - minio
   uplink:
     image: ghcr.io/fosstank/uplink:latest
     build: .
@@ -23,6 +25,11 @@ services:
       - 8091:8090
     volumes:
       - ./uplink/pb_data:/pb_data
+    environment:
+      ORIGIN_URL: "http://origin:8090"
+      ORIGIN_API_KEY: "${ORIGIN_API_KEY}"
+    depends_on:
+      - origin
   # Minio is only used for testing locally, in production you'll use an actual S3 bucket.
   minio:
     image: minio/minio:latest

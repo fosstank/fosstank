@@ -18,7 +18,9 @@ package main
 
 import (
 	"context"
+	"errors"
 	"fmt"
+	"io/fs"
 	"log"
 	"net/http"
 	"os"
@@ -34,11 +36,16 @@ const STREAM_OUTPUT_DIR = "streams"
 
 var s3Client *minio.Client
 var encodersWg sync.WaitGroup
+var encodersCtx context.Context
+var encodersCancel context.CancelFunc
 
 func main() {
-	err := os.Mkdir(DATA_DIR, 0755)
-	if err != nil && !os.IsExist(err) {
-		log.Fatal(err)
+	if _, err := os.Stat(DATA_DIR); errors.Is(err, fs.ErrNotExist) {
+		log.Println("Data directory not found, creating it.")
+		err := os.Mkdir(DATA_DIR, 0755)
+		if err != nil {
+			log.Fatal(err)
+		}
 	}
 
 	streams, err := LoadStreams()
@@ -93,7 +100,7 @@ func main() {
 	mux.HandleFunc("DELETE /streams/{id}", ApiKeyMiddleware(StreamDeleteHandler(&streams), config))
 
 	// Start ffmpeg processes
-	ctx, cancel := context.WithCancel(context.Background())
+	encodersCtx, encodersCancel = context.WithCancel(context.Background())
 	for _, stream := range streams {
 		if stream.Source == "" {
 			continue
@@ -104,7 +111,7 @@ func main() {
 			log.Fatal(err)
 		}
 
-		encodingCtx, encodingCancel := context.WithCancel(ctx)
+		encodingCtx, encodingCancel := context.WithCancel(encodersCtx)
 		stream.SubprocessCancelFunc = encodingCancel
 		go encodeStream(encodingCtx, stream)
 	}
@@ -117,7 +124,7 @@ func main() {
 
 		// We received an interrupt signal, shut down.
 		fmt.Println("Shutting down ffmpeg subprocesses...")
-		cancel()
+		encodersCancel()
 		encodersWg.Wait()
 
 		fmt.Println("Shutting down HTTP server...")

@@ -2,6 +2,8 @@ package main
 
 import (
 	"encoding/json"
+	"errors"
+	"io/fs"
 	"log"
 	"os"
 )
@@ -13,10 +15,7 @@ type Config struct {
 }
 
 func LoadConfig() (*Config, error) {
-	data, err := os.ReadFile(DATA_DIR + "/" + CONFIG_FILE)
-	if err == os.ErrPermission {
-		return nil, err
-	} else if err != nil {
+	if _, err := os.Stat(DATA_DIR + "/" + CONFIG_FILE); errors.Is(err, fs.ErrNotExist) {
 		log.Println("No existing config file found, creating new one.")
 		apiKey, err := cryptoGenerateRandomString(32)
 		if err != nil {
@@ -32,6 +31,13 @@ func LoadConfig() (*Config, error) {
 			return nil, err
 		}
 		return config, nil
+	} else if err != nil {
+		return nil, err
+	}
+
+	data, err := os.ReadFile(DATA_DIR + "/" + CONFIG_FILE)
+	if err != nil {
+		return nil, err
 	}
 
 	var config Config

@@ -4,10 +4,13 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"log"
 	"os"
 )
 
 var ErrNotFound = errors.New("not found")
+
+const STREAMS_FILE = "streams.json"
 
 type Streams []*Stream
 
@@ -21,9 +24,24 @@ type Stream struct {
 }
 
 func LoadStreams() (Streams, error) {
-	data, err := os.ReadFile(DATA_DIR + "/streams.json")
-	if err != nil {
+	data, err := os.ReadFile(DATA_DIR + "/" + STREAMS_FILE)
+	if err == os.ErrPermission {
 		return nil, err
+	} else if err != nil {
+		log.Println("No existing streams file found, creating new one.")
+		streams := Streams{
+			{
+				Id:      generateRandomString(16),
+				Name:    "Stream 1",
+				Source:  "",
+				Encoder: EncoderLibX264,
+			},
+		}
+		err = streams.Save()
+		if err != nil {
+			return nil, err
+		}
+		return streams, nil
 	}
 
 	var streams Streams
@@ -40,7 +58,7 @@ func (s Streams) Save() error {
 	if err != nil {
 		return err
 	}
-	return os.WriteFile(DATA_DIR+"/streams.json", data, 0644)
+	return os.WriteFile(DATA_DIR+"/"+STREAMS_FILE, data, 0644)
 }
 
 func (s Streams) Get(id string) (*Stream, error) {

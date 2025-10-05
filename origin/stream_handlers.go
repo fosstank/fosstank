@@ -5,8 +5,6 @@ import (
 	"encoding/json"
 	"net/http"
 	"os"
-
-	"github.com/google/uuid"
 )
 
 func StreamCreateHandler(streams *Streams) http.HandlerFunc {
@@ -19,7 +17,7 @@ func StreamCreateHandler(streams *Streams) http.HandlerFunc {
 		}
 
 		if stream.Id == "" {
-			stream.Id = uuid.NewString()
+			stream.Id = generateRandomString(16)
 		}
 		err = os.MkdirAll(DATA_DIR+"/"+STREAM_OUTPUT_DIR+"/"+stream.Id, 0755)
 		if err != nil {
@@ -31,6 +29,13 @@ func StreamCreateHandler(streams *Streams) http.HandlerFunc {
 		err = streams.Save()
 		if err != nil {
 			http.Error(w, "Error saving streams", http.StatusInternalServerError)
+			return
+		}
+
+		w.Header().Set("Content-Type", "application/json")
+		err = json.NewEncoder(w).Encode(stream)
+		if err != nil {
+			http.Error(w, "Error encoding JSON data", http.StatusInternalServerError)
 			return
 		}
 	}

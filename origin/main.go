@@ -25,7 +25,6 @@ import (
 	"os/signal"
 	"sync"
 
-	"github.com/google/uuid"
 	"github.com/minio/minio-go/v7"
 	"github.com/minio/minio-go/v7/pkg/credentials"
 )
@@ -43,22 +42,17 @@ func main() {
 	}
 
 	streams, err := LoadStreams()
-	if err == os.ErrPermission {
+	if err != nil {
 		log.Fatal(err)
-	} else if err != nil {
-		log.Println("No existing streams.json found, creating new one.")
-		streams = Streams{
-			{
-				Id:      uuid.NewString(),
-				Name:    "Stream 1",
-				Source:  "",
-				Encoder: EncoderLibX264,
-			},
-		}
-		err = streams.Save()
-		if err != nil {
-			log.Fatal(err)
-		}
+	}
+
+	config, err := LoadConfig()
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	if config.ApiKey == "" {
+		log.Fatal("API key not set in config")
 	}
 
 	s3Endpoint := os.Getenv("S3_ENDPOINT")
@@ -93,10 +87,10 @@ func main() {
 		Handler: mux,
 	}
 
-	mux.HandleFunc("POST /streams", StreamCreateHandler(&streams))
-	mux.HandleFunc("GET /streams/{id}", StreamRetrieveHandler(&streams))
-	mux.HandleFunc("PUT /streams/{id}", StreamUpdateHandler(&streams))
-	mux.HandleFunc("DELETE /streams/{id}", StreamDeleteHandler(&streams))
+	mux.HandleFunc("POST /streams", ApiKeyMiddleware(StreamCreateHandler(&streams), config))
+	mux.HandleFunc("GET /streams/{id}", ApiKeyMiddleware(StreamRetrieveHandler(&streams), config))
+	mux.HandleFunc("PUT /streams/{id}", ApiKeyMiddleware(StreamUpdateHandler(&streams), config))
+	mux.HandleFunc("DELETE /streams/{id}", ApiKeyMiddleware(StreamDeleteHandler(&streams), config))
 
 	// Start ffmpeg processes
 	ctx, cancel := context.WithCancel(context.Background())
@@ -137,7 +131,7 @@ func main() {
 
 	// Serve stream output dir
 	fs := http.FileServer(http.Dir(DATA_DIR + "/" + STREAM_OUTPUT_DIR))
-	mux.Handle("/"+STREAM_OUTPUT_DIR+"/", http.StripPrefix("/"+STREAM_OUTPUT_DIR, fs))
+	mux.Handle("/artifacts/", http.StripPrefix("/artifacts/", fs))
 
 	fmt.Println("Server started on", server.Addr)
 	if err := server.ListenAndServe(); err != http.ErrServerClosed {

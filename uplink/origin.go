@@ -30,7 +30,7 @@ func init() {
 
 	// TODO: Validate encoder is available on origin server
 	app.OnRecordCreate("streams").BindFunc(func(e *core.RecordEvent) error {
-		_, err := originClient.CreateStream(&Stream{
+		createdStream, err := originClient.CreateStream(&Stream{
 			Id:      e.Record.Id,
 			Title:   e.Record.GetString("title"),
 			Source:  e.Record.GetString("source"),
@@ -39,12 +39,13 @@ func init() {
 		if err != nil {
 			return err
 		}
+		e.Record.Set("url", createdStream.Url)
 		return e.Next()
 	})
 
 	// TODO: Validate encoder is available on origin server
 	app.OnRecordUpdate("streams").BindFunc(func(e *core.RecordEvent) error {
-		_, err := originClient.UpdateStream(&Stream{
+		updatedStream, err := originClient.UpdateStream(&Stream{
 			Id:      e.Record.Id,
 			Title:   e.Record.GetString("title"),
 			Source:  e.Record.GetString("source"),
@@ -53,6 +54,7 @@ func init() {
 		if err != nil {
 			return err
 		}
+		e.Record.Set("url", updatedStream.Url)
 		return e.Next()
 	})
 
@@ -106,6 +108,7 @@ const (
 type Stream struct {
 	Id      string  `json:"id"`
 	Title   string  `json:"title"`
+	Url     string  `json:"url"`
 	Source  string  `json:"source"`
 	Encoder Encoder `json:"encoder"`
 }

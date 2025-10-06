@@ -31,6 +31,12 @@ func StreamCreateHandler(streams *Streams) http.HandlerFunc {
 			http.Error(w, "Error creating stream directory", http.StatusInternalServerError)
 		}
 
+		stream.Url, err = stream.PublicUrl()
+		if err != nil {
+			http.Error(w, "Error generating public URL", http.StatusInternalServerError)
+			return
+		}
+
 		*streams = (*streams).Add(stream)
 		err = streams.Save()
 		if err != nil {
@@ -93,6 +99,14 @@ func StreamUpdateHandler(streams *Streams) http.HandlerFunc {
 				encodingCtx, encodingCancel := context.WithCancel(context.Background())
 				stream.SubprocessCancelFunc = encodingCancel
 				go encodeStream(encodingCtx, stream)
+			}
+		}
+
+		if newStream.Id != id || newStream.Url == "" {
+			newStream.Url, err = newStream.PublicUrl()
+			if err != nil {
+				http.Error(w, "Error generating public url", http.StatusInternalServerError)
+				return
 			}
 		}
 

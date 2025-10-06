@@ -4,8 +4,10 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"io/fs"
 	"log"
+	"net/url"
 	"os"
 )
 
@@ -18,6 +20,7 @@ type Streams []*Stream
 type Stream struct {
 	Id      string  `json:"id"`
 	Title   string  `json:"title"`
+	Url     string  `json:"url"`
 	Source  string  `json:"source"`
 	Encoder Encoder `json:"encoder"`
 
@@ -102,6 +105,10 @@ func (s Streams) Update(id string, newStream *Stream) (Streams, error) {
 		stream.Title = newStream.Title
 	}
 
+	if stream.Url != newStream.Url {
+		stream.Url = newStream.Url
+	}
+
 	if stream.Source != newStream.Source {
 		stream.Source = newStream.Source
 	}
@@ -111,4 +118,18 @@ func (s Streams) Update(id string, newStream *Stream) (Streams, error) {
 	}
 
 	return s, nil
+}
+
+func (s *Stream) PublicUrl() (string, error) {
+	endpoint := CDN_ENDPOINT
+	if endpoint == "" && s3Client != nil {
+		endpoint = s3Client.EndpointURL().String()
+	}
+	u, err := url.Parse(endpoint)
+	if err != nil {
+		return "", err
+	}
+
+	joinedUrl := u.JoinPath(S3_BUCKET_NAME, s.Id, fmt.Sprintf("%s.m3u8", s.Id))
+	return joinedUrl.String(), nil
 }

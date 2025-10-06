@@ -33,6 +33,9 @@ import (
 
 const DATA_DIR = "ogn_data"
 const STREAM_OUTPUT_DIR = "streams"
+const S3_BUCKET_NAME = "fosstank-streams"
+
+var CDN_ENDPOINT = os.Getenv("CDN_ENDPOINT")
 
 var s3Client *minio.Client
 var encodersWg sync.WaitGroup
@@ -75,16 +78,36 @@ func main() {
 		}
 
 		// Make sure the bucket exists
-		exists, err := s3Client.BucketExists(context.Background(), "fosstank-streams")
+		exists, err := s3Client.BucketExists(context.Background(), S3_BUCKET_NAME)
 		if err != nil {
 			log.Fatal(err)
 		}
 		if !exists {
-			err = s3Client.MakeBucket(context.Background(), "fosstank-streams", minio.MakeBucketOptions{})
+			err = s3Client.MakeBucket(context.Background(), S3_BUCKET_NAME, minio.MakeBucketOptions{})
 			if err != nil {
 				log.Fatal(err)
 			}
-			fmt.Println("Created S3 bucket: fosstank-streams")
+			fmt.Printf("Created S3 bucket: %s\n", S3_BUCKET_NAME)
+
+			// Set bucket policy to allow public read access
+			bucketPolicy := fmt.Sprintf(`{
+				"Version": "2012-10-17",
+				"Statement": [
+					{
+						"Effect": "Allow",
+						"Principal": "*",
+						"Action": "s3:GetObject",
+						"Resource": "arn:aws:s3:::%s/*"
+					}
+				]
+			}`, S3_BUCKET_NAME)
+
+			err = s3Client.SetBucketPolicy(context.Background(), S3_BUCKET_NAME, bucketPolicy)
+			if err != nil {
+				log.Printf("Warning: Failed to set bucket policy: %v", err)
+			} else {
+				fmt.Printf("Set public read policy for bucket: %s\n", S3_BUCKET_NAME)
+			}
 		}
 	}
 
@@ -94,10 +117,13 @@ func main() {
 		Handler: mux,
 	}
 
-	mux.HandleFunc("POST /streams", ApiKeyMiddleware(StreamCreateHandler(&streams), config))
-	mux.HandleFunc("GET /streams/{id}", ApiKeyMiddleware(StreamRetrieveHandler(&streams), config))
-	mux.HandleFunc("PUT /streams/{id}", ApiKeyMiddleware(StreamUpdateHandler(&streams), config))
-	mux.HandleFunc("DELETE /streams/{id}", ApiKeyMiddleware(StreamDeleteHandler(&streams), config))
+	mux.Handle("POST /streams", ApiKeyMiddleware(StreamCreateHandler(&streams), config))
+	mux.Handle("GET /streams/{id}", ApiKeyMiddleware(StreamRetrieveHandler(&streams), config))
+	mux.Handle("PUT /streams/{id}", ApiKeyMiddleware(StreamUpdateHandler(&streams), config))
+	mux.Handle("DELETE /streams/{id}", ApiKeyMiddleware(StreamDeleteHandler(&streams), config))
+	// Serve stream output dir
+	fs := http.FileServer(http.Dir(DATA_DIR + "/" + STREAM_OUTPUT_DIR))
+	mux.Handle("/artifacts/", ApiKeyMiddleware(http.StripPrefix("/artifacts/", fs), config))
 
 	// Start ffmpeg processes
 	encodersCtx, encodersCancel = context.WithCancel(context.Background())
@@ -135,10 +161,6 @@ func main() {
 		close(gracefulShutdown)
 		fmt.Println("Shutdown complete.")
 	}()
-
-	// Serve stream output dir
-	fs := http.FileServer(http.Dir(DATA_DIR + "/" + STREAM_OUTPUT_DIR))
-	mux.Handle("/artifacts/", http.StripPrefix("/artifacts/", fs))
 
 	fmt.Println("Server started on", server.Addr)
 	if err := server.ListenAndServe(); err != http.ErrServerClosed {

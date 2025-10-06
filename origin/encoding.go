@@ -43,7 +43,7 @@ func encodeStream(ctx context.Context, stream *Stream) error {
 		}
 		defer watcher.Close()
 
-		go syncS3(s3Client, stream, watcher)
+		go syncS3(ctx, s3Client, stream, watcher)
 
 		err = watcher.Add(DATA_DIR + "/" + STREAM_OUTPUT_DIR + "/" + stream.Id)
 		if err != nil {

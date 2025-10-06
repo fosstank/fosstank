@@ -11,9 +11,12 @@ import (
 	"github.com/minio/minio-go/v7"
 )
 
-func syncS3(client *minio.Client, stream *Stream, watcher *fsnotify.Watcher) {
+func syncS3(ctx context.Context, client *minio.Client, stream *Stream, watcher *fsnotify.Watcher) {
+	uploadedInitMP4 := false
 	for {
 		select {
+		case <-ctx.Done():
+			return
 		case event, ok := <-watcher.Events:
 			if !ok {
 				continue
@@ -31,20 +34,31 @@ func syncS3(client *minio.Client, stream *Stream, watcher *fsnotify.Watcher) {
 					continue
 				}
 
+				if !uploadedInitMP4 {
+					// Upload the init.mp4 file first, if it exists.
+					initMP4Path := filepath.Join(DATA_DIR, STREAM_OUTPUT_DIR, stream.Id, "init.mp4")
+					if _, err := os.Stat(initMP4Path); err == nil {
+						_, err = client.FPutObject(ctx, "fosstank-streams", stream.Id+"/init.mp4", initMP4Path, minio.PutObjectOptions{ContentType: "video/mp4"})
+						if err != nil {
+
+						}
+						uploadedInitMP4 = true
+					}
+				}
+
+				// Read the playlist file to get the latest segment name
 				playlistData, err := os.ReadFile(event.Name)
 				if err != nil {
 					// retry?
 					log.Println("error reading playlist data:", event.Name)
 					continue
 				}
-
 				b := bytes.TrimRight(playlistData, "\r\n")
 				lines := bytes.Split(b, []byte("\n"))
 				latestSegment := string(lines[len(lines)-1])
 
 				// Upload segment to S3
-				// TODO: use a proper context
-				_, err = client.FPutObject(context.Background(), "fosstank-streams", stream.Id+"/"+latestSegment, DATA_DIR+"/"+STREAM_OUTPUT_DIR+"/"+stream.Id+"/"+latestSegment, minio.PutObjectOptions{ContentType: "video/mp2t"})
+				_, err = client.FPutObject(ctx, "fosstank-streams", stream.Id+"/"+latestSegment, DATA_DIR+"/"+STREAM_OUTPUT_DIR+"/"+stream.Id+"/"+latestSegment, minio.PutObjectOptions{ContentType: "video/mp2t"})
 				if err != nil {
 					// FIXME: retry?
 					log.Println("error saving segment to S3:", latestSegment)
@@ -52,7 +66,7 @@ func syncS3(client *minio.Client, stream *Stream, watcher *fsnotify.Watcher) {
 				}
 
 				// After segment upload, upload playlist to S3
-				_, err = client.FPutObject(context.Background(), "fosstank-streams", stream.Id+"/"+filepath.Base(event.Name), event.Name, minio.PutObjectOptions{ContentType: "application/vnd.apple.mpegurl"})
+				_, err = client.FPutObject(ctx, "fosstank-streams", stream.Id+"/"+filepath.Base(event.Name), event.Name, minio.PutObjectOptions{ContentType: "application/vnd.apple.mpegurl"})
 				if err != nil {
 					// FIXME: retry?
 					log.Println("error saving playlist to S3:", filepath.Base(event.Name))
@@ -61,7 +75,7 @@ func syncS3(client *minio.Client, stream *Stream, watcher *fsnotify.Watcher) {
 			} else if event.Has(fsnotify.Remove) {
 				// ffmpeg has deleted a file(because of the -hls_list_size flag).
 				// We need to delete it in S3.
-				err := client.RemoveObject(context.Background(), "fosstank-streams", stream.Id+"/"+filepath.Base(event.Name), minio.RemoveObjectOptions{})
+				err := client.RemoveObject(ctx, "fosstank-streams", stream.Id+"/"+filepath.Base(event.Name), minio.RemoveObjectOptions{})
 				if err != nil {
 					// FIXME: retry?
 					log.Println("error deleting segment from S3:", filepath.Base(event.Name))

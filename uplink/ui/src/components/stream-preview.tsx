@@ -31,6 +31,7 @@ interface StreamPreviewProps {
 
 export default function StreamPreview({ title, subtitle, stream, offline = false, onClick }: StreamPreviewProps) {
     const imgElement = useRef<HTMLImageElement | null>(null);
+    const imgUrl = stream.thumbnail_url == "" ? STATIC_ASSETS["noise"] : stream.thumbnail_url;
 
     return (
         <button
@@ -42,7 +43,7 @@ export default function StreamPreview({ title, subtitle, stream, offline = false
                     imgElement.current.src = STATIC_ASSETS["noiseColor"];
                     setTimeout(() => {
                         if (imgElement.current) {
-                            imgElement.current.src = STATIC_ASSETS["noise"];
+                            imgElement.current.src = imgUrl;
                         }
                     }, 250);
                 }
@@ -50,7 +51,7 @@ export default function StreamPreview({ title, subtitle, stream, offline = false
         >
             <Image
                 ref={imgElement}
-                src={STATIC_ASSETS["noise"]}
+                src={imgUrl}
                 alt="noise"
                 fill={true}
                 className="object-cover bg-neutral-600 hover:brightness-110"

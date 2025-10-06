@@ -31,10 +31,22 @@ func StreamCreateHandler(streams *Streams) http.HandlerFunc {
 			http.Error(w, "Error creating stream directory", http.StatusInternalServerError)
 		}
 
-		stream.Url, err = stream.PublicUrl()
-		if err != nil {
-			http.Error(w, "Error generating public URL", http.StatusInternalServerError)
-			return
+		if stream.Source != "" && stream.Encoder != "" {
+			encodingCtx, encodingCancel := context.WithCancel(encodersCtx)
+			stream.SubprocessCancelFunc = encodingCancel
+			go encodeStream(encodingCtx, stream)
+
+			stream.Url, err = stream.PublicUrl()
+			if err != nil {
+				http.Error(w, "Error generating public url", http.StatusInternalServerError)
+				return
+			}
+
+			stream.ThumbnailUrl, err = stream.PublicThumbnailUrl()
+			if err != nil {
+				http.Error(w, "Error generating public thumbnail url", http.StatusInternalServerError)
+				return
+			}
 		}
 
 		*streams = (*streams).Add(stream)
@@ -43,10 +55,6 @@ func StreamCreateHandler(streams *Streams) http.HandlerFunc {
 			http.Error(w, "Error saving streams", http.StatusInternalServerError)
 			return
 		}
-
-		encodingCtx, encodingCancel := context.WithCancel(encodersCtx)
-		stream.SubprocessCancelFunc = encodingCancel
-		go encodeStream(encodingCtx, stream)
 
 		w.Header().Set("Content-Type", "application/json")
 		err = json.NewEncoder(w).Encode(stream)
@@ -102,11 +110,21 @@ func StreamUpdateHandler(streams *Streams) http.HandlerFunc {
 			}
 		}
 
-		if newStream.Id != id || newStream.Url == "" {
-			newStream.Url, err = newStream.PublicUrl()
-			if err != nil {
-				http.Error(w, "Error generating public url", http.StatusInternalServerError)
-				return
+		if newStream.Source != "" && newStream.Encoder != "" {
+			if newStream.Id != id || newStream.Url == "" {
+				newStream.Url, err = newStream.PublicUrl()
+				if err != nil {
+					http.Error(w, "Error generating public url", http.StatusInternalServerError)
+					return
+				}
+			}
+
+			if newStream.Id != id || newStream.ThumbnailUrl == "" {
+				newStream.ThumbnailUrl, err = newStream.PublicThumbnailUrl()
+				if err != nil {
+					http.Error(w, "Error generating public thumbnail url", http.StatusInternalServerError)
+					return
+				}
 			}
 		}
 

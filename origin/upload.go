@@ -5,6 +5,7 @@ import (
 	"context"
 	"log"
 	"os"
+	"os/exec"
 	"path/filepath"
 
 	"github.com/fsnotify/fsnotify"
@@ -79,6 +80,24 @@ func syncS3(ctx context.Context, client *minio.Client, stream *Stream, watcher *
 				if err != nil {
 					// FIXME: retry?
 					log.Println("error deleting segment from S3:", filepath.Base(event.Name))
+					continue
+				}
+			} else if event.Has(fsnotify.Write) {
+				// FIXME: This will upload multiple times. We should debounce it.
+				// Upload the thumbnail.jpg file to S3
+				if filepath.Base(event.Name) == "thumbnail.jpg" {
+					// Use imagemagick to compress the thumbnail
+					resizedPath := filepath.Dir(event.Name) + "/thumbnail_resized.jpg"
+					cmd := exec.Command("convert", event.Name, "-resize", "960x540>", resizedPath)
+					if err := cmd.Run(); err != nil {
+						log.Println("error compressing thumbnail with imagemagick:", err)
+						continue
+					}
+
+					_, err := client.FPutObject(ctx, "fosstank-streams", stream.Id+"/thumbnail.jpg", resizedPath, minio.PutObjectOptions{ContentType: "image/jpeg"})
+					if err != nil {
+						log.Println("error saving thumbnail to S3:", err)
+					}
 					continue
 				}
 			}

@@ -8,6 +8,6 @@ FROM alpine:latest
 WORKDIR /
 EXPOSE 8080
 
-RUN apk add ffmpeg
+RUN apk add ffmpeg imagemagick
 COPY --from=go-build /build/origin .
 ENTRYPOINT ["/origin"]

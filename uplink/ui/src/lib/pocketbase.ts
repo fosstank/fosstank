@@ -26,6 +26,7 @@ export interface Stream {
     id: string
     title: string
     url: string
+    thumbnail_url: string
     viewers: number
 }
 

@@ -18,11 +18,12 @@ const STREAMS_FILE = "streams.json"
 type Streams []*Stream
 
 type Stream struct {
-	Id      string  `json:"id"`
-	Title   string  `json:"title"`
-	Url     string  `json:"url"`
-	Source  string  `json:"source"`
-	Encoder Encoder `json:"encoder"`
+	Id           string  `json:"id"`
+	Title        string  `json:"title"`
+	Url          string  `json:"url"`
+	ThumbnailUrl string  `json:"thumbnailUrl"`
+	Source       string  `json:"source"`
+	Encoder      Encoder `json:"encoder"`
 
 	SubprocessCancelFunc context.CancelFunc `json:"-"`
 }
@@ -109,6 +110,10 @@ func (s Streams) Update(id string, newStream *Stream) (Streams, error) {
 		stream.Url = newStream.Url
 	}
 
+	if stream.ThumbnailUrl != newStream.ThumbnailUrl {
+		stream.ThumbnailUrl = newStream.ThumbnailUrl
+	}
+
 	if stream.Source != newStream.Source {
 		stream.Source = newStream.Source
 	}
@@ -131,5 +136,19 @@ func (s *Stream) PublicUrl() (string, error) {
 	}
 
 	joinedUrl := u.JoinPath(S3_BUCKET_NAME, s.Id, fmt.Sprintf("%s.m3u8", s.Id))
+	return joinedUrl.String(), nil
+}
+
+func (s *Stream) PublicThumbnailUrl() (string, error) {
+	endpoint := CDN_ENDPOINT
+	if endpoint == "" && s3Client != nil {
+		endpoint = s3Client.EndpointURL().String()
+	}
+	u, err := url.Parse(endpoint)
+	if err != nil {
+		return "", err
+	}
+
+	joinedUrl := u.JoinPath(S3_BUCKET_NAME, s.Id, "thumbnail.jpg")
 	return joinedUrl.String(), nil
 }

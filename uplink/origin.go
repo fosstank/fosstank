@@ -40,6 +40,7 @@ func init() {
 			return err
 		}
 		e.Record.Set("url", createdStream.Url)
+		e.Record.Set("thumbnail_url", createdStream.ThumbnailUrl)
 		return e.Next()
 	})
 
@@ -55,6 +56,7 @@ func init() {
 			return err
 		}
 		e.Record.Set("url", updatedStream.Url)
+		e.Record.Set("thumbnail_url", updatedStream.ThumbnailUrl)
 		return e.Next()
 	})
 
@@ -106,11 +108,12 @@ const (
 )
 
 type Stream struct {
-	Id      string  `json:"id"`
-	Title   string  `json:"title"`
-	Url     string  `json:"url"`
-	Source  string  `json:"source"`
-	Encoder Encoder `json:"encoder"`
+	Id           string  `json:"id"`
+	Title        string  `json:"title"`
+	Url          string  `json:"url"`
+	ThumbnailUrl string  `json:"thumbnailUrl"`
+	Source       string  `json:"source"`
+	Encoder      Encoder `json:"encoder"`
 }
 
 func NewOriginClient(url, apiKey string) *OriginClient {

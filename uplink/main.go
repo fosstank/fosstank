@@ -36,7 +36,7 @@ import (
 	"github.com/pocketbase/pocketbase/tools/subscriptions"
 )
 
-//go:embed ui/out/*
+//go:embed all:ui/out
 var client embed.FS
 
 var app = pocketbase.New()

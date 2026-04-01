@@ -1,0 +1,12 @@
+[project]
+name = "tts"
+version = "0.1.0"
+description = "FastAPI server for generating text to speech audio"
+readme = "README.md"
+requires-python = ">=3.13"
+dependencies = [
+    "fastapi>=0.135.2",
+    "uvicorn>=0.42.0",
+    "voxcpm>=1.5.0",
+]
+

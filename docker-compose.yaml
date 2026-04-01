@@ -31,6 +31,21 @@ services:
       ORIGIN_API_KEY: "${ORIGIN_API_KEY}"
     depends_on:
       - origin
+  tts:
+    image: ghcr.io/fosstank/tts:latest
+    build: .
+    user: 1000:1000
+    container_name: tts
+    restart: unless-stopped
+    ports:
+      - 8092:8000
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
   # Minio is only used for testing locally, in production you'll use an actual S3 bucket.
   minio:
     image: minio/minio:latest

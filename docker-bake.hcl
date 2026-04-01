@@ -1,5 +1,5 @@
 group "default" {
-    targets = ["origin", "uplink"]
+    targets = ["origin", "uplink", "tts"]
 }
 
 target "origin" {
@@ -13,4 +13,9 @@ target "uplink" {
     contexts = {
         ui = "uplink/ui"
     }
+}
+
+target "tts" {
+    tags= ["ghcr.io/fosstank/tts:latest"]
+    context = "tts"
 }

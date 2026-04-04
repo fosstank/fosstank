@@ -39,6 +39,8 @@ services:
     restart: unless-stopped
     ports:
       - 8092:8000
+    volumes:
+      - model-cache:/home/ubuntu/.cache
     deploy:
       resources:
         reservations:
@@ -61,3 +63,6 @@ services:
       - 9001:9001
     volumes:
       - ./s3:/data
+
+volumes:
+  model-cache:

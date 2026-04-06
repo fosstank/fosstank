@@ -80,6 +80,17 @@ func main() {
 			return apis.NewBadRequestError("Insufficient balance", nil)
 		}
 
+		// Send TTS request to origin server
+		if e.Record.Collection().Name == "tts_orders" {
+			streamId := e.Record.GetString("stream")
+			voice := option.GetString("title")
+			prompt := e.Record.GetString("message")
+			err := originClient.SendTTS(streamId, voice, prompt)
+			if err != nil {
+				return apis.NewInternalServerError("Error sending TTS", err)
+			}
+		}
+
 		// The user balance field has a min of 0, so this will error if they don't have enough.
 		// We've already checked their balance above anyway though.
 		e.Auth.Set("balance", balance-cost)

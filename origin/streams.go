@@ -24,6 +24,7 @@ type Stream struct {
 	ThumbnailUrl string  `json:"thumbnailUrl"`
 	Source       string  `json:"source"`
 	Encoder      Encoder `json:"encoder"`
+	AudioSink    string  `json:"audioSink"`
 
 	SubprocessCancelFunc context.CancelFunc `json:"-"`
 }
@@ -31,14 +32,7 @@ type Stream struct {
 func LoadStreams() (Streams, error) {
 	if _, err := os.Stat(DATA_DIR + "/" + STREAMS_FILE); errors.Is(err, fs.ErrNotExist) {
 		log.Println("No existing streams file found, creating new one.")
-		streams := Streams{
-			{
-				Id:      generateRandomString(16),
-				Title:   "Stream 1",
-				Source:  "",
-				Encoder: EncoderLibX264,
-			},
-		}
+		streams := Streams{}
 		err = streams.Save()
 		if err != nil {
 			return nil, err

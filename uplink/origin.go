@@ -31,10 +31,11 @@ func init() {
 	// TODO: Validate encoder is available on origin server
 	app.OnRecordCreate("streams").BindFunc(func(e *core.RecordEvent) error {
 		createdStream, err := originClient.CreateStream(&Stream{
-			Id:      e.Record.Id,
-			Title:   e.Record.GetString("title"),
-			Source:  e.Record.GetString("source"),
-			Encoder: Encoder(e.Record.GetString("encoder")),
+			Id:        e.Record.Id,
+			Title:     e.Record.GetString("title"),
+			Source:    e.Record.GetString("source"),
+			Encoder:   Encoder(e.Record.GetString("encoder")),
+			AudioSink: e.Record.GetString("audio_sink"),
 		})
 		if err != nil {
 			return err
@@ -47,10 +48,11 @@ func init() {
 	// TODO: Validate encoder is available on origin server
 	app.OnRecordUpdate("streams").BindFunc(func(e *core.RecordEvent) error {
 		updatedStream, err := originClient.UpdateStream(&Stream{
-			Id:      e.Record.Id,
-			Title:   e.Record.GetString("title"),
-			Source:  e.Record.GetString("source"),
-			Encoder: Encoder(e.Record.GetString("encoder")),
+			Id:        e.Record.Id,
+			Title:     e.Record.GetString("title"),
+			Source:    e.Record.GetString("source"),
+			Encoder:   Encoder(e.Record.GetString("encoder")),
+			AudioSink: e.Record.GetString("audio_sink"),
 		})
 		if err != nil {
 			return err
@@ -79,10 +81,11 @@ func init() {
 
 		for _, record := range streams {
 			stream := &Stream{
-				Id:      record.Id,
-				Title:   record.GetString("title"),
-				Source:  record.GetString("source"),
-				Encoder: Encoder(record.GetString("encoder")),
+				Id:        record.Id,
+				Title:     record.GetString("title"),
+				Source:    record.GetString("source"),
+				Encoder:   Encoder(record.GetString("encoder")),
+				AudioSink: record.GetString("audio_sink"),
 			}
 			_, err := originClient.CreateStream(stream)
 			if err != nil {
@@ -114,6 +117,7 @@ type Stream struct {
 	ThumbnailUrl string  `json:"thumbnailUrl"`
 	Source       string  `json:"source"`
 	Encoder      Encoder `json:"encoder"`
+	AudioSink    string  `json:"audioSink"`
 }
 
 func NewOriginClient(url, apiKey string) *OriginClient {
@@ -215,6 +219,25 @@ func (c *OriginClient) DeleteStream(id string) error {
 
 	if resp.StatusCode != http.StatusOK {
 		return fmt.Errorf("failed to delete stream: %s", resp.Status)
+	}
+
+	return nil
+}
+
+func (c *OriginClient) SendTTS(streamId string, voice string, prompt string) error {
+	data, err := json.Marshal(map[string]string{"prompt": prompt})
+	if err != nil {
+		return err
+	}
+
+	resp, err := c.doRequest("POST", "/streams/"+streamId+"/tts/"+voice, bytes.NewReader(data))
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return fmt.Errorf("failed to TTS stream: %s", resp.Status)
 	}
 
 	return nil

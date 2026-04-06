@@ -121,6 +121,7 @@ func main() {
 	mux.Handle("GET /streams/{id}", ApiKeyMiddleware(StreamRetrieveHandler(&streams), config))
 	mux.Handle("PUT /streams/{id}", ApiKeyMiddleware(StreamUpdateHandler(&streams), config))
 	mux.Handle("DELETE /streams/{id}", ApiKeyMiddleware(StreamDeleteHandler(&streams), config))
+	mux.Handle("POST /streams/{id}/tts/{voice}", ApiKeyMiddleware(StreamTTSHandler(&streams), config))
 	// Serve stream output dir
 	fs := http.FileServer(http.Dir(DATA_DIR + "/" + STREAM_OUTPUT_DIR))
 	mux.Handle("/artifacts/", ApiKeyMiddleware(http.StripPrefix("/artifacts/", fs), config))

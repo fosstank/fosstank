@@ -12,8 +12,10 @@ services:
       S3_ENDPOINT: "${S3_ENDPOINT:-minio:9000}"
       S3_ACCESS_KEY: "${S3_ACCESS_KEY:-minioadmin}"
       S3_SECRET_KEY: "${S3_SECRET_KEY:-minioadmin}"
+      PULSE_SERVER: "unix:${XDG_RUNTIME_DIR:-/run/user/1000}/pulse/native"
     volumes:
       - ./origin/ogn_data:/ogn_data
+      - ${XDG_RUNTIME_DIR:-/run/user/1000}/pulse/native:${XDG_RUNTIME_DIR:-/run/user/1000}/pulse/native
     depends_on:
       - minio
   uplink:

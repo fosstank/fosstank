@@ -1,4 +1,4 @@
-FROM alpine:3.22 AS ui-build
+FROM alpine:3.23 AS ui-build
 WORKDIR /build
 RUN apk add npm
 
@@ -7,7 +7,7 @@ RUN npm install
 COPY --from=ui . .
 RUN npm run build
 
-FROM golang:1.25-alpine AS go-build
+FROM golang:1.26-alpine AS go-build
 WORKDIR /build
 
 COPY go.mod go.sum *.go ./
@@ -15,7 +15,7 @@ COPY migrations/. ./migrations
 COPY --from=ui-build /build/out ./ui/out
 RUN go build .
 
-FROM alpine:3.22
+FROM alpine:3.23
 ARG TARGET
 WORKDIR /
 EXPOSE 8080

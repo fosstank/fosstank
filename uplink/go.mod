@@ -1,10 +1,10 @@
 module github.com/fosstank/fosstank/uplink
 
-go 1.25.0
+go 1.26.0
 
 require (
 	github.com/pocketbase/dbx v1.12.0
-	github.com/pocketbase/pocketbase v0.36.7
+	github.com/pocketbase/pocketbase v0.36.8
 	github.com/stripe/stripe-go/v82 v82.5.1
 )
 
@@ -39,5 +39,5 @@ require (
 	modernc.org/libc v1.70.0 // indirect
 	modernc.org/mathutil v1.7.1 // indirect
 	modernc.org/memory v1.11.0 // indirect
-	modernc.org/sqlite v1.48.0 // indirect
+	modernc.org/sqlite v1.48.1 // indirect
 )

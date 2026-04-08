@@ -12,9 +12,11 @@ ENV UV_PYTHON_INSTALL_DIR=/opt/uv/python
 COPY pyproject.toml uv.lock .python-version ./
 RUN uv sync --managed-python --frozen --no-dev
 
-FROM ubuntu:24.04
+FROM nvidia/cuda:13.1.1-runtime-ubuntu24.04
 WORKDIR /app
 EXPOSE 8000
+
+RUN apt-get update && apt-get install -y ffmpeg && rm -rf /var/lib/apt/lists/*
 
 COPY --from=deps /opt/uv/python /opt/uv/python
 COPY --from=deps /build/.venv /app/.venv

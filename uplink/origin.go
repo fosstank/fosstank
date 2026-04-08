@@ -2,6 +2,7 @@ package main
 
 import (
 	"bytes"
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -9,6 +10,7 @@ import (
 	"os"
 
 	"github.com/pocketbase/pocketbase/core"
+	"github.com/pocketbase/pocketbase/tools/filesystem"
 )
 
 var ORIGIN_URL string = os.Getenv("ORIGIN_URL")
@@ -70,6 +72,49 @@ func init() {
 		return e.Next()
 	})
 
+	app.OnRecordCreate("tts_options").BindFunc(func(e *core.RecordEvent) error {
+		audioFile := e.Record.GetString("referenceAudio")
+		var audioFileReader io.ReadCloser
+		if audioFile != "" {
+			fsys, r, err := getFileReader(e.Record, audioFile)
+			if err != nil {
+				return err
+			}
+			defer fsys.Close()
+			defer r.Close()
+			audioFileReader = r
+		}
+		if err := originClient.SyncTTSVoice(e.Record.GetString("title"), audioFileReader, audioFile, e.Record.GetString("referenceText")); err != nil {
+			return err
+		}
+		return e.Next()
+	})
+
+	app.OnRecordUpdate("tts_options").BindFunc(func(e *core.RecordEvent) error {
+		audioFile := e.Record.GetString("referenceAudio")
+		var audioFileReader io.ReadCloser
+		if audioFile != "" {
+			fsys, r, err := getFileReader(e.Record, audioFile)
+			if err != nil {
+				return err
+			}
+			defer fsys.Close()
+			defer r.Close()
+			audioFileReader = r
+		}
+		if err := originClient.SyncTTSVoice(e.Record.GetString("title"), audioFileReader, audioFile, e.Record.GetString("referenceText")); err != nil {
+			return err
+		}
+		return e.Next()
+	})
+
+	app.OnRecordDelete("tts_options").BindFunc(func(e *core.RecordEvent) error {
+		if err := originClient.DeleteTTSVoice(e.Record.GetString("title")); err != nil {
+			return err
+		}
+		return e.Next()
+	})
+
 	// TODO: Validate encoder is available on origin server
 	// TODO: Upsert existing streams instead of just creating
 	app.OnServe().BindFunc(func(e *core.ServeEvent) error {
@@ -90,6 +135,36 @@ func init() {
 			_, err := originClient.CreateStream(stream)
 			if err != nil {
 				app.Logger().Error("Failed to sync stream %s to origin: %v", record.Id, err)
+			}
+		}
+
+		return e.Next()
+	})
+
+	app.OnServe().BindFunc(func(e *core.ServeEvent) error {
+		// Sync existing TTS voices to origin
+		ttsOptions, err := e.App.FindAllRecords("tts_options")
+		if err != nil {
+			app.Logger().Error("Failed to load TTS options", "error", err)
+			return err
+		}
+
+		for _, record := range ttsOptions {
+			audioFile := record.GetString("referenceAudio")
+			var audioFileReader io.ReadCloser
+			if audioFile != "" {
+				fsys, r, err := getFileReader(record, audioFile)
+				if err != nil {
+					app.Logger().Error("Failed to get audio file reader for TTS option", "record", record.Id, "error", err)
+					return err
+				}
+				defer fsys.Close()
+				defer r.Close()
+				audioFileReader = r
+			}
+			if err := originClient.SyncTTSVoice(record.GetString("title"), audioFileReader, audioFile, record.GetString("referenceText")); err != nil {
+				app.Logger().Error("Failed to sync TTS voice to origin", "record", record.Id, "error", err)
+				return err
 			}
 		}
 
@@ -119,6 +194,12 @@ type Stream struct {
 	Encoder      Encoder `json:"encoder"`
 	AudioSink    string  `json:"audioSink"`
 }
+
+// type TTSOption struct {
+// 	Title          string `json:"title"`
+// 	ReferenceAudio string `json:"referenceAudio"`
+// 	ReferenceText  string `json:"referenceText"`
+// }
 
 func NewOriginClient(url, apiKey string) *OriginClient {
 	return &OriginClient{
@@ -163,6 +244,25 @@ func (c *OriginClient) CreateStream(stream *Stream) (*Stream, error) {
 	}
 
 	return &createdStream, nil
+}
+
+func getFileReader(record *core.Record, path string) (*filesystem.System, io.ReadCloser, error) {
+	filePath := record.BaseFilesPath() + "/" + path
+
+	fsys, err := app.NewFilesystem()
+	if err != nil {
+		return nil, nil, err
+	}
+
+	r, err := fsys.GetReader(filePath)
+	if err != nil {
+		closeErr := fsys.Close()
+		if closeErr != nil {
+			return nil, nil, fmt.Errorf("failed to get reader: %v, also failed to close filesystem: %v", err, closeErr)
+		}
+		return nil, nil, err
+	}
+	return fsys, r, nil
 }
 
 func (c *OriginClient) GetStream(id string) (*Stream, error) {
@@ -224,13 +324,70 @@ func (c *OriginClient) DeleteStream(id string) error {
 	return nil
 }
 
-func (c *OriginClient) SendTTS(streamId string, voice string, prompt string) error {
+func (c *OriginClient) SyncTTSVoice(title string, audioFileReader io.Reader, audioFileName string, referenceText string) error {
+	type syncRequest struct {
+		ReferenceAudio *string `json:"reference_audio,omitempty"`
+		ReferenceText  *string `json:"reference_text,omitempty"`
+	}
+
+	body := syncRequest{}
+	if referenceText != "" {
+		body.ReferenceText = &referenceText
+	}
+	if audioFileReader != nil {
+		audioBytes, err := io.ReadAll(audioFileReader)
+		if err != nil {
+			return err
+		}
+		b64 := base64.StdEncoding.EncodeToString(audioBytes)
+		body.ReferenceAudio = &b64
+	}
+
+	data, err := json.Marshal(body)
+	if err != nil {
+		return err
+	}
+
+	req, err := http.NewRequest(http.MethodPut, c.Url+"/tts-options/"+title, bytes.NewReader(data))
+	if err != nil {
+		return err
+	}
+	req.Header.Set("Authorization", "Bearer "+c.ApiKey)
+	req.Header.Set("Content-Type", "application/json")
+
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return fmt.Errorf("failed to sync TTS voice: %s", resp.Status)
+	}
+	return nil
+}
+
+func (c *OriginClient) DeleteTTSVoice(title string) error {
+	resp, err := c.doRequest("DELETE", "/tts-options/"+title, nil)
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return fmt.Errorf("failed to delete TTS option: %s", resp.Status)
+	}
+	return nil
+}
+
+func (c *OriginClient) SendTTS(streamId string, optionTitle string, prompt string) error {
 	data, err := json.Marshal(map[string]string{"prompt": prompt})
 	if err != nil {
 		return err
 	}
 
-	resp, err := c.doRequest("POST", "/streams/"+streamId+"/tts/"+voice, bytes.NewReader(data))
+	resp, err := c.doRequest("POST", "/streams/"+streamId+"/tts/"+optionTitle, bytes.NewReader(data))
 	if err != nil {
 		return err
 	}

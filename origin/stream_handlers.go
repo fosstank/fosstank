@@ -11,6 +11,8 @@ import (
 	"os/exec"
 )
 
+const TTS_URL = "http://tts:8000"
+
 func StreamCreateHandler(streams *Streams) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		stream := &Stream{}
@@ -226,7 +228,7 @@ func StreamTTSHandler(streams *Streams) http.HandlerFunc {
 
 		// TODO: Queue TTS requests
 		voice := r.PathValue("voice")
-		audioURL := fmt.Sprintf("http://tts:8000/tts/%s", voice)
+		audioURL := fmt.Sprintf("%s/tts/%s", TTS_URL, voice)
 
 		// Send HTTP request to get the audio stream
 		resp, err := http.Post(audioURL, "application/json", r.Body)
@@ -266,5 +268,52 @@ func StreamTTSHandler(streams *Streams) http.HandlerFunc {
 			http.Error(w, "Audio player failed", http.StatusInternalServerError)
 			return
 		}
+	}
+}
+
+func TTSVoiceSyncHandler() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		name := r.PathValue("name")
+		url := fmt.Sprintf("%s/voices/%s", TTS_URL, name)
+
+		req, err := http.NewRequest(http.MethodPut, url, r.Body)
+		if err != nil {
+			log.Println("Failed to create TTS voice sync request", err)
+			http.Error(w, "Failed to create request", http.StatusInternalServerError)
+			return
+		}
+		req.Header.Set("Content-Type", r.Header.Get("Content-Type"))
+
+		resp, err := http.DefaultClient.Do(req)
+		if err != nil {
+			log.Println("Failed to sync TTS voice", err)
+			http.Error(w, "Failed to sync TTS voice", http.StatusInternalServerError)
+			return
+		}
+		defer resp.Body.Close()
+		w.WriteHeader(resp.StatusCode)
+	}
+}
+
+func TTSVoiceDeleteHandler() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		name := r.PathValue("name")
+		url := fmt.Sprintf("%s/voices/%s", TTS_URL, name)
+
+		req, err := http.NewRequest(http.MethodDelete, url, nil)
+		if err != nil {
+			log.Println("Failed to create TTS voice delete request", err)
+			http.Error(w, "Failed to create request", http.StatusInternalServerError)
+			return
+		}
+
+		resp, err := http.DefaultClient.Do(req)
+		if err != nil {
+			log.Println("Failed to delete TTS voice", err)
+			http.Error(w, "Failed to delete TTS voice", http.StatusInternalServerError)
+			return
+		}
+		defer resp.Body.Close()
+		w.WriteHeader(resp.StatusCode)
 	}
 }

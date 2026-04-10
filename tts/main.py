@@ -4,10 +4,10 @@ import json
 import os
 import numpy as np # pyright: ignore[reportMissingTypeStubs]
 from voxcpm import VoxCPM # pyright: ignore[reportMissingTypeStubs]
-from typing import Generator, NamedTuple
+from typing import NamedTuple
 from contextlib import asynccontextmanager
 from fastapi import FastAPI, HTTPException
-from fastapi.responses import StreamingResponse
+from fastapi.responses import Response
 from pydantic import BaseModel
 import uvicorn
 
@@ -62,13 +62,13 @@ class SyncVoiceRequest(BaseModel):
     reference_audio: str | None = None  # base64-encoded WAV
     reference_text: str | None = None
 
-def _wav_header(sample_rate: int, num_channels: int = 1, bits_per_sample: int = 16) -> bytes:
-    # Use 0xFFFFFFFF for both RIFF and data chunk sizes to signal unknown/streaming length
+def _build_wav(sample_rate: int, audio_data: bytes, num_channels: int = 1, bits_per_sample: int = 16) -> bytes:
     byte_rate = sample_rate * num_channels * bits_per_sample // 8
     block_align = num_channels * bits_per_sample // 8
-    return struct.pack(
+    data_size = len(audio_data)
+    header = struct.pack(
         "<4sI4s4sIHHIIHH4sI",
-        b"RIFF", 0xFFFFFFFF,
+        b"RIFF", 36 + data_size,
         b"WAVE",
         b"fmt ", 16,
         1,               # PCM
@@ -77,11 +77,12 @@ def _wav_header(sample_rate: int, num_channels: int = 1, bits_per_sample: int = 
         byte_rate,
         block_align,
         bits_per_sample,
-        b"data", 0xFFFFFFFF,
+        b"data", data_size,
     )
+    return header + audio_data
 
 @app.post("/tts/{voiceTitle}")
-def tts_handler(voiceTitle: str, body: TTSRequest) -> StreamingResponse:
+def tts_handler(voiceTitle: str, body: TTSRequest) -> Response:
     sample_rate: int = model.tts_model.sample_rate # pyright: ignore[reportUnknownMemberType]
 
     voice = voices.get(voiceTitle)
@@ -97,25 +98,21 @@ def tts_handler(voiceTitle: str, body: TTSRequest) -> StreamingResponse:
     #     text = "(" + reference_text + ")" + text
     #     reference_text = None
 
-    def generate() -> Generator[bytes, None, None]:
-        yield _wav_header(sample_rate)
-
-        for chunk in model.generate_streaming( # pyright: ignore[reportUnknownMemberType]
-            text=text,
-            #reference_wav_path=voice.reference_audio,
-            prompt_wav_path=voice.reference_audio,
-            prompt_text=reference_text,
-            cfg_value=2.0,
-            inference_timesteps=10,
-            normalize=False,
-            denoise=False,
-            # retry_badcase=True, # Retries don't run in streaming mode
-            # retry_badcase_max_times=3,
-            # retry_badcase_ratio_threshold=6.0,
-        ):
-            yield (chunk * 32767).astype(np.int16).tobytes()
-
-    return StreamingResponse(generate(), media_type="audio/wav")
+    audio = model.generate( # pyright: ignore[reportUnknownMemberType]
+        text=text,
+        # reference_wav_path=voice.reference_audio,
+        prompt_wav_path=voice.reference_audio,
+        prompt_text=reference_text,
+        cfg_value=2.0,
+        inference_timesteps=10,
+        normalize=False,
+        denoise=False,
+        retry_badcase=True,
+        retry_badcase_max_times=3,
+        retry_badcase_ratio_threshold=6.0,
+    )
+    audio_data = (audio * 32767).astype(np.int16).tobytes()
+    return Response(content=_build_wav(sample_rate, audio_data), media_type="audio/wav")
 
 
 @app.put("/voices/{title}")

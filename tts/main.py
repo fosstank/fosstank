@@ -18,7 +18,7 @@ VOICES_DIR = "voices"
 # Optimize set to false because of this: https://github.com/OpenBMB/VoxCPM/issues/107
 # This entire service can be sped up using the nano-vllm backend instead of pytorch,
 # but for now this is a fine workaround
-model = VoxCPM.from_pretrained("openbmb/VoxCPM1.5", optimize=False, load_denoiser=False) # pyright: ignore[reportUnknownMemberType]
+model = VoxCPM.from_pretrained("openbmb/VoxCPM2", optimize=False, load_denoiser=False) # pyright: ignore[reportUnknownMemberType]
 
 Voice = NamedTuple("Voice", [("reference_audio", str | None), ("reference_text", str | None)])
 voices: dict[str, Voice] = {}
@@ -94,13 +94,13 @@ def tts_handler(voiceTitle: str, body: TTSRequest) -> Response:
         raise HTTPException(status_code=400, detail="Prompt cannot be empty")
     
     reference_text: str | None = voice.reference_text
-    # if voice.reference_audio is None and reference_text is not None:
-    #     text = "(" + reference_text + ")" + text
-    #     reference_text = None
+    if voice.reference_audio is None and reference_text is not None:
+        text = "(" + reference_text + ")" + text
+        reference_text = None
 
     audio = model.generate( # pyright: ignore[reportUnknownMemberType]
         text=text,
-        # reference_wav_path=voice.reference_audio,
+        reference_wav_path=voice.reference_audio,
         prompt_wav_path=voice.reference_audio,
         prompt_text=reference_text,
         cfg_value=2.0,

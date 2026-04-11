@@ -8,6 +8,6 @@ dependencies = [
     "fastapi>=0.135.2",
     "torchcodec>=0.11.0",
     "uvicorn>=0.42.0",
-    "voxcpm>=1.5.0",
+    "voxcpm>=2.0.0",
 ]
 

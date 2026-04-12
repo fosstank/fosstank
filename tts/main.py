@@ -2,8 +2,9 @@ import base64
 import struct
 import json
 import os
-import numpy as np # pyright: ignore[reportMissingTypeStubs]
-from voxcpm import VoxCPM # pyright: ignore[reportMissingTypeStubs]
+import numpy as np
+from nanovllm_voxcpm import VoxCPM
+from nanovllm_voxcpm.models.voxcpm2.server import AsyncVoxCPM2ServerPool
 from typing import NamedTuple
 from contextlib import asynccontextmanager
 from fastapi import FastAPI, HTTPException
@@ -15,13 +16,13 @@ DATA_DIR = os.path.join(os.environ.get("HOME", "/root"), ".cache", "tts")
 VOICES_FILE = "voices.json"
 VOICES_DIR = "voices"
 
-# Optimize set to false because of this: https://github.com/OpenBMB/VoxCPM/issues/107
-# This entire service can be sped up using the nano-vllm backend instead of pytorch,
-# but for now this is a fine workaround
-model = VoxCPM.from_pretrained("openbmb/VoxCPM2", optimize=False, load_denoiser=False) # pyright: ignore[reportUnknownMemberType]
-
 Voice = NamedTuple("Voice", [("reference_audio", str | None), ("reference_text", str | None)])
 voices: dict[str, Voice] = {}
+
+# Cached prompt latents per voice title (populated lazily on first use)
+_voice_latents: dict[str, bytes] = {}
+_server: AsyncVoxCPM2ServerPool | None = None
+_sample_rate: int = 44100
 
 
 def load_voices() -> None:
@@ -46,11 +47,22 @@ def save_voices() -> None:
 
 @asynccontextmanager
 async def lifespan(_: FastAPI):
+    global _server, _sample_rate
     os.makedirs(os.path.join(DATA_DIR, VOICES_DIR), exist_ok=True)
     load_voices()
-    # if "none" not in voices:
-        # voices["none"] = Voice(None, None)
+    _server = VoxCPM.from_pretrained(
+        model="openbmb/VoxCPM2",
+        devices=[0],
+        max_num_batched_tokens=8192,
+        max_num_seqs=16,
+        max_model_len=4096,
+        gpu_memory_utilization=0.95,
+    )
+    await _server.wait_for_ready()
+    model_info = await _server.get_model_info()
+    _sample_rate = int(model_info["sample_rate"])
     yield
+    await _server.stop()
 
 
 app = FastAPI(lifespan=lifespan)
@@ -81,39 +93,51 @@ def _build_wav(sample_rate: int, audio_data: bytes, num_channels: int = 1, bits_
     )
     return header + audio_data
 
-@app.post("/tts/{voiceTitle}")
-def tts_handler(voiceTitle: str, body: TTSRequest) -> Response:
-    sample_rate: int = model.tts_model.sample_rate # pyright: ignore[reportUnknownMemberType]
 
+async def _get_prompt_latents(voice_title: str, voice: Voice) -> bytes | None:
+    """Encode reference audio to latents on first use, then cache the result."""
+    if voice.reference_audio is None:
+        return None
+    if voice_title not in _voice_latents:
+        with open(voice.reference_audio, "rb") as f:
+            wav_bytes = f.read()
+        assert _server is not None
+        _voice_latents[voice_title] = await _server.encode_latents(wav_bytes, "wav")
+    return _voice_latents[voice_title]
+
+
+@app.post("/tts/{voiceTitle}")
+async def tts_handler(voiceTitle: str, body: TTSRequest) -> Response:
     voice = voices.get(voiceTitle)
     if voice is None:
         raise HTTPException(status_code=400, detail="Voice not found")
-    
+
     text = body.prompt
     if text == "":
         raise HTTPException(status_code=400, detail="Prompt cannot be empty")
-    
-    reference_text: str | None = voice.reference_text
-    if voice.reference_audio is None and reference_text is not None:
-        text = "(" + reference_text + ")" + text
-        reference_text = None
 
-    audio = model.generate( # pyright: ignore[reportUnknownMemberType]
-        text=text,
-        reference_wav_path=voice.reference_audio,
-        prompt_wav_path=voice.reference_audio,
-        prompt_text=reference_text,
+    assert _server is not None
+
+    prompt_latents = await _get_prompt_latents(voiceTitle, voice)
+    prompt_text = voice.reference_text or ""
+
+    # Fallback: no reference audio but has reference text — prepend as style hint
+    if prompt_latents is None and voice.reference_text is not None:
+        text = "(" + voice.reference_text + ")" + text
+        prompt_text = ""
+
+    chunks = []
+    async for chunk in _server.generate(
+        target_text=text,
+        prompt_latents=prompt_latents,
+        prompt_text=prompt_text,
         cfg_value=2.0,
-        inference_timesteps=10,
-        normalize=False,
-        denoise=False,
-        retry_badcase=True,
-        retry_badcase_max_times=3,
-        retry_badcase_ratio_threshold=6.0,
-    )
-    audio_data = (audio * 32767).astype(np.int16).tobytes()
-    return Response(content=_build_wav(sample_rate, audio_data), media_type="audio/wav")
+    ):
+        chunks.append(chunk)
 
+    wav = np.concatenate(chunks, axis=0)
+    audio_data = (wav * 32767).astype(np.int16).tobytes()
+    return Response(content=_build_wav(_sample_rate, audio_data), media_type="audio/wav")
 
 @app.put("/voices/{title}")
 async def put_voice(title: str, body: SyncVoiceRequest) -> None:
@@ -123,6 +147,8 @@ async def put_voice(title: str, body: SyncVoiceRequest) -> None:
         reference_audio = os.path.join(DATA_DIR, VOICES_DIR, f"{title}.wav")
         with open(reference_audio, "wb") as f:
             f.write(base64.b64decode(body.reference_audio))
+        # Invalidate cached latents so they are re-encoded with the new audio
+        _voice_latents.pop(title, None)
     voices[title] = Voice(reference_audio=reference_audio, reference_text=body.reference_text)
     save_voices()
 
@@ -133,6 +159,7 @@ async def delete_voice(title: str) -> None:
     if os.path.exists(reference_audio):
         os.unlink(reference_audio)
     voices.pop(title, None)
+    _voice_latents.pop(title, None)
     save_voices()
 
 
